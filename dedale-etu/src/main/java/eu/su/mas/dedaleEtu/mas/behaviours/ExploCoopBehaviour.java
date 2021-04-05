@@ -66,15 +66,24 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 
 	@Override
 	public void action() {
+		final MessageTemplate msgTemplate_endMerge = MessageTemplate.and(MessageTemplate.MatchProtocol("re-move"), 
+				MessageTemplate.MatchPerformative(ACLMessage.INFORM) );	
+
+		final ACLMessage msg_endMerge = this.myAgent.receive(msgTemplate_endMerge);
+		
+		if( msg_endMerge != null) {
+			System.out.println(this.myAgent.getLocalName() + " --> Start move");
+		}
+		
 		final MessageTemplate msgTemplate = MessageTemplate.MatchPerformative(ACLMessage.INFORM);			
 		final ACLMessage msg = this.myAgent.receive(msgTemplate);
-		
+
 		//If receive a message, don't move
 		if (msg != null) {
 			this.myAgent.postMessage(msg);
-			return ;
+			block();
 		}
-		//If no msg and agent can move
+		//If no msg and agent can move + msg_endMerge(si il y a eu echange)
 		if(((ExploreCoopAgent)this.myAgent).move) {
 
 			

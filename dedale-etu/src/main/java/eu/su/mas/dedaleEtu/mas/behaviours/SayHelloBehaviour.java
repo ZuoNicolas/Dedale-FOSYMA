@@ -3,6 +3,7 @@ package eu.su.mas.dedaleEtu.mas.behaviours;
 import java.util.List;
 
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
+import eu.su.mas.dedaleEtu.mas.agents.dummies.explo.ExploreCoopAgent;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.TickerBehaviour;
@@ -34,13 +35,13 @@ public class SayHelloBehaviour extends TickerBehaviour{
 
 	@Override
 	public void onTick() {
-		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
-
-		//A message is defined by : a performative, a sender, a set of receivers, (a protocol),(a content (and/or contentOBject))
-		ACLMessage msg=new ACLMessage(ACLMessage.INFORM);
 		
-
-		if (myPosition!=""){
+		//Si je suis en train de bouger
+		if ( ((ExploreCoopAgent)this.myAgent).move ) {
+			String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
+			
+			ACLMessage msg=new ACLMessage(ACLMessage.INFORM);
+			msg.setProtocol("ProtocolePoke");
 			msg.setSender(this.myAgent.getAID());
 			//System.out.println("Agent "+this.myAgent.getLocalName()+ " is trying to reach its friends");
 			msg.setContent("Hello World, I'm at "+myPosition);

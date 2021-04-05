@@ -36,11 +36,12 @@ public class ReceivePokeBehaviour extends SimpleBehaviour{
 	public void action() {
 		//1) receive the message
 
-		final MessageTemplate msgTemplate = MessageTemplate.MatchPerformative(ACLMessage.INFORM);			
+		final MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("ProtocolePoke"), 
+																	MessageTemplate.MatchPerformative(ACLMessage.INFORM) );	
+		
 		final ACLMessage msg = this.myAgent.receive(msgTemplate);
 
-		String c = "class";
-		if (msg != null && msg.getContent().getClass() == c.getClass()) {
+		if (msg != null) {
 			((ExploreCoopAgent)this.myAgent).move=false;
 
 			System.out.println(this.myAgent.getLocalName()+"<----Result received Poke from "+msg.getSender().getLocalName()+" ,content= "+msg.getContent());
