@@ -69,8 +69,6 @@ public class ReceiveMapBehaviour extends SimpleBehaviour{
 
 			this.myAgent.postMessage(send_msg);
 			
-			//maj variable
-			((ExploreCoopAgent)this.myAgent).move=true;
 		}else{
 			block();// the behaviour goes to sleep until the arrival of a new message in the agent's Inbox.
 		}

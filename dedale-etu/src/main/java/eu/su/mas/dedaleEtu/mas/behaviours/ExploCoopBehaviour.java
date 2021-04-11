@@ -51,6 +51,8 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 	 * Current knowledge of the agent regarding the environment
 	 */
 	private MapRepresentation myMap;
+	
+	private boolean SuccesMove = true;
 
 /**
  * 
@@ -71,18 +73,25 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 
 		final ACLMessage msg_endMerge = this.myAgent.receive(msgTemplate_endMerge);
 		
-		if( msg_endMerge != null) {
-			System.out.println(this.myAgent.getLocalName() + " --> Start move");
-		}
-		
-		final MessageTemplate msgTemplate = MessageTemplate.MatchPerformative(ACLMessage.INFORM);			
+		final MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("ProtocolePoke"), 
+				MessageTemplate.MatchPerformative(ACLMessage.INFORM) );	
+
 		final ACLMessage msg = this.myAgent.receive(msgTemplate);
 
 		//If receive a message, don't move
 		if (msg != null) {
+			((ExploreCoopAgent)this.myAgent).move = false;
+			msg.getContent();
+			System.out.println(this.myAgent.getLocalName() + " --> Stop move");
 			this.myAgent.postMessage(msg);
 			block();
 		}
+		
+		if( msg_endMerge != null) {
+			((ExploreCoopAgent)this.myAgent).move = true;
+			System.out.println(this.myAgent.getLocalName() + " --> Start move");
+		}
+		
 		//If no msg and agent can move + msg_endMerge(si il y a eu echange)
 		if(((ExploreCoopAgent)this.myAgent).move) {
 
@@ -106,7 +115,7 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 				 * Just added here to let you see what the agent is doing, otherwise he will be too quick
 				 */
 				try {
-					this.myAgent.doWait(1000);
+					this.myAgent.doWait(10000);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -136,13 +145,14 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 					//4) select next move.
 					//4.1 If there exist one open node directly reachable, go for it,
 					//	 otherwise choose one from the openNode list, compute the shortestPath and go for it
+					
 					if (nextNode==null){
 						//no directly accessible openNode
 						//chose one, compute the path and take the first step.
 						nextNode=this.myMap.getShortestPathToClosestOpenNode(myPosition).get(0);//getShortestPath(myPosition,this.openNodes.get(0)).get(0);
-						//System.out.println(this.myAgent.getLocalName()+"-- list= "+this.myMap.getOpenNodes()+"| nextNode: "+nextNode);
+						System.out.println(this.myAgent.getLocalName()+"-- list= "+this.myMap.getOpenNodes()+"| nextNode: "+nextNode+ " actual node :"+myPosition);
 					}else {
-						//System.out.println("nextNode notNUll - "+this.myAgent.getLocalName()+"-- list= "+this.myMap.getOpenNodes()+"\n -- nextNode: "+nextNode);
+						System.out.println("nextNode notNUll - "+this.myAgent.getLocalName()+"-- list= "+this.myMap.getOpenNodes()+"\n -- nextNode: "+nextNode + " actual node :"+myPosition);
 					}
 					//4) At each time step, the agent blindly send all its graph to its surrounding to illustrate how to share its knowledge (the topology currently) with the the others agents. 	
 					// If it was written properly, this sharing action should be in a dedicated behaviour set, the receivers be automatically computed, and only a subgraph would be shared.
@@ -165,7 +175,7 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 	
 					((ExploreCoopAgent)this.myAgent).updateMap(this.myMap);
 	
-					((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
+					((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);	
 				}
 	
 			}

@@ -49,7 +49,7 @@ public class SayHelloBehaviour extends TickerBehaviour{
 			for (String agentName : receivers) {
 				msg.addReceiver(new AID(agentName,AID.ISLOCALNAME));
 			}
-			
+			System.out.println(this.myAgent.getLocalName() + " say Hello");
 
 			//Mandatory to use this method (it takes into account the environment to decide if someone is reachable or not)
 			((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
