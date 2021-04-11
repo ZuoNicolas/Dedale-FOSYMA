@@ -43,11 +43,13 @@ public class ReceivePokeBehaviour extends SimpleBehaviour{
 
 		if (msg != null) {
 			((ExploreCoopAgent)this.myAgent).move=false;
+			((ExploreCoopAgent)this.myAgent).succesMerge = false;
 			msg.getContent();
 			System.out.println(this.myAgent.getLocalName()+"<----Result received Poke from "+msg.getSender().getLocalName());
 			this.myMap = ((ExploreCoopAgent)this.myAgent).getMap();
 			this.myAgent.addBehaviour(new ShareMapBehaviour(this.myAgent,this.myMap, this.list_agentNames));
-			this.myAgent.addBehaviour(new MaxWaitingTimeBehaviour(this.myAgent, 1000));
+			this.myAgent.addBehaviour(new ReceiveMapBehaviour(this.myAgent));
+			this.myAgent.addBehaviour(new MaxWaitingTimeBehaviour(this.myAgent, 2000));
 		}else{
 			block();// the behaviour goes to sleep until the arrival of a new message in the agent's Inbox.
 		}

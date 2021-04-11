@@ -115,7 +115,7 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 				 * Just added here to let you see what the agent is doing, otherwise he will be too quick
 				 */
 				try {
-					this.myAgent.doWait(500);
+					this.myAgent.doWait(100);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -139,6 +139,14 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 				//3) while openNodes is not empty, continues.
 				if (!this.myMap.hasOpenNode()){
 					//Explo finished
+					
+					List<Behaviour> lb = ((ExploreCoopAgent)this.myAgent).getLB();
+				    for (Behaviour b : lb) {
+				    	if (! b.getBehaviourName().equals("ExploCoopBehaviour")) {
+				    		System.out.println(b.getBehaviourName());
+				    		this.myAgent.removeBehaviour(b);
+				    	}
+				      }
 					finished=true;
 					System.out.println(this.myAgent.getLocalName()+" - Exploration successufully done, behaviour removed.");
 				}else{
@@ -150,13 +158,17 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 						//no directly accessible openNode
 						//chose one, compute the path and take the first step.
 						nextNode=this.myMap.getShortestPathToClosestOpenNode(myPosition).get(0);//getShortestPath(myPosition,this.openNodes.get(0)).get(0);
-						System.out.println(this.myAgent.getLocalName()+"-- list= "+this.myMap.getOpenNodes()+"| nextNode: "+nextNode+ " actual node :"+myPosition);
+						//System.out.println(this.myAgent.getLocalName()+"-- list= "+this.myMap.getOpenNodes()+"| nextNode: "+nextNode+ " actual node :"+myPosition);
+						((ExploreCoopAgent)this.myAgent).nextNode = nextNode;
 					}else {
-						System.out.println("nextNode notNUll - "+this.myAgent.getLocalName()+"-- list= "+this.myMap.getOpenNodes()+"\n -- nextNode: "+nextNode + " actual node :"+myPosition);
+						//System.out.println("nextNode notNUll - "+this.myAgent.getLocalName()+"-- list= "+this.myMap.getOpenNodes()+"\n -- nextNode: "+nextNode + " actual node :"+myPosition);
 					}
 					//4) At each time step, the agent blindly send all its graph to its surrounding to illustrate how to share its knowledge (the topology currently) with the the others agents. 	
 					// If it was written properly, this sharing action should be in a dedicated behaviour set, the receivers be automatically computed, and only a subgraph would be shared.
-	
+					if (((ExploreCoopAgent)this.myAgent).changeNode) {
+						((ExploreCoopAgent)this.myAgent).changeNode = false;
+						nextNode = ((ExploreCoopAgent)this.myAgent).nextNode = nextNode;
+					}
 	//				ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 	//				msg.setProtocol("SHARE-TOPO");
 	//				msg.setSender(this.myAgent.getAID());
@@ -174,7 +186,6 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 	//				((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
 	
 					((ExploreCoopAgent)this.myAgent).updateMap(this.myMap);
-	
 					((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);	
 				}
 	

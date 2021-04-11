@@ -59,15 +59,10 @@ public class ReceiveMapBehaviour extends SimpleBehaviour{
 			this.myMap.mergeMap(sgreceived);
 			
 			((ExploreCoopAgent)this.myAgent).updateMap(this.myMap);
+			((ExploreCoopAgent)this.myAgent).succesMerge = true;
 			System.out.println(this.myAgent.getLocalName()+"<---End Map merge");
 			
-			//Signaler sois-meme pour recommencer a bouger
-			ACLMessage send_msg=new ACLMessage(ACLMessage.INFORM);
-			send_msg.setProtocol("re-move");
-			send_msg.setSender(this.myAgent.getAID());
-			send_msg.setContent("End Merge");
-
-			this.myAgent.postMessage(send_msg);
+			this.finished = true;
 			
 		}else{
 			block();// the behaviour goes to sleep until the arrival of a new message in the agent's Inbox.

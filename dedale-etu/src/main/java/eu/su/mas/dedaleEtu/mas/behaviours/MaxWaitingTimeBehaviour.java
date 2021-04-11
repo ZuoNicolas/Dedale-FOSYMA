@@ -1,7 +1,10 @@
 package eu.su.mas.dedaleEtu.mas.behaviours;
 
+import java.util.List;
+
 import eu.su.mas.dedaleEtu.mas.agents.dummies.explo.ExploreCoopAgent;
 import jade.core.Agent;
+import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.SimpleBehaviour;
 
 public class MaxWaitingTimeBehaviour extends SimpleBehaviour{
@@ -25,16 +28,23 @@ public class MaxWaitingTimeBehaviour extends SimpleBehaviour{
 	@Override
 	public void action() {
 		
-		if (((ExploreCoopAgent)this.myAgent).move) {
-			this.finished=true;
+		if (((ExploreCoopAgent)this.myAgent).succesMerge) {
+			((ExploreCoopAgent)this.myAgent).succesMerge = false;
 			System.out.println(this.myAgent.getLocalName()+"<---Echange réussi");
-			return ;
+			this.myAgent.addBehaviour(new SharePosBehaviour(this.myAgent, ((ExploreCoopAgent)this.myAgent).nextNode));
+			this.start = (int) System.currentTimeMillis();
 		}
 		this.now = (int) System.currentTimeMillis();
 		
 		if ( this.now - this.start > this.timer) {
 			((ExploreCoopAgent)this.myAgent).move=true;
 			System.out.println(this.myAgent.getLocalName()+"<---Echange raté");
+			List<Behaviour> lb= ((ExploreCoopAgent)this.myAgent).getLB();
+			
+			for( Behaviour b : lb) {
+				if (b.getBehaviourName() == "ReceiveMapBehaviour")
+				this.myAgent.removeBehaviour(b);
+			}
 			this.finished=true;
 		}
 		

@@ -54,5 +54,6 @@ public class SayHelloBehaviour extends TickerBehaviour{
 			//Mandatory to use this method (it takes into account the environment to decide if someone is reachable or not)
 			((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
 		}
+		
 	}
 }
