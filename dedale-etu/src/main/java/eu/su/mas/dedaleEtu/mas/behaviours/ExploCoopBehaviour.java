@@ -115,7 +115,7 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 				 * Just added here to let you see what the agent is doing, otherwise he will be too quick
 				 */
 				try {
-					this.myAgent.doWait(100);
+					this.myAgent.doWait(500);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -158,10 +158,10 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 						//no directly accessible openNode
 						//chose one, compute the path and take the first step.
 						nextNode=this.myMap.getShortestPathToClosestOpenNode(myPosition).get(0);//getShortestPath(myPosition,this.openNodes.get(0)).get(0);
-						//System.out.println(this.myAgent.getLocalName()+"-- list= "+this.myMap.getOpenNodes()+"| nextNode: "+nextNode+ " actual node :"+myPosition);
+						System.out.println(this.myAgent.getLocalName()+"-- list= "+this.myMap.getOpenNodes()+"| nextNode: "+nextNode+ " actual node :"+myPosition);
 						((ExploreCoopAgent)this.myAgent).nextNode = nextNode;
 					}else {
-						//System.out.println("nextNode notNUll - "+this.myAgent.getLocalName()+"-- list= "+this.myMap.getOpenNodes()+"\n -- nextNode: "+nextNode + " actual node :"+myPosition);
+						System.out.println("nextNode notNUll - "+this.myAgent.getLocalName()+"-- list= "+this.myMap.getOpenNodes()+"\n -- nextNode: "+nextNode + " actual node :"+myPosition);
 					}
 					//4) At each time step, the agent blindly send all its graph to its surrounding to illustrate how to share its knowledge (the topology currently) with the the others agents. 	
 					// If it was written properly, this sharing action should be in a dedicated behaviour set, the receivers be automatically computed, and only a subgraph would be shared.
