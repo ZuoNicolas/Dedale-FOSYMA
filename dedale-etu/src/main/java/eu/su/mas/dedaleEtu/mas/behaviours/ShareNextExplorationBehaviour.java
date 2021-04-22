@@ -46,7 +46,7 @@ public class ShareNextExplorationBehaviour extends SimpleBehaviour{
 			if ( otherAgentNextNode != "" && this.nextNode.equals(otherAgentPos) && myAgent.compareTo(otherAgent) == -1){
 				((ExploreCoopAgent)this.myAgent).changeNode = true;
 				((ExploreCoopAgent)this.myAgent).nextNode = otherAgentNextNode;
-				System.out.println(myAgent+"<---- Back off for "+ otherAgent+"******************************");
+				System.out.println(myAgent+" ----> Find a Golem at ");
 			}
 			
 			//Signaler sois-meme pour recommencer a bouger

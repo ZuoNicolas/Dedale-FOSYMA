@@ -3,10 +3,9 @@ package eu.su.mas.dedaleEtu.mas.behaviours;
 import java.util.List;
 
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
-import eu.su.mas.dedaleEtu.mas.agents.dummies.explo.ExploreCoopAgent;
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.TickerBehaviour;
+import jade.core.behaviours.OneShotBehaviour;
 import jade.lang.acl.ACLMessage;
 
 /**
@@ -14,7 +13,7 @@ import jade.lang.acl.ACLMessage;
  * @author hc
  *
  */
-public class SayHelloBehaviour extends TickerBehaviour{
+public class SayHelloBehaviour extends OneShotBehaviour{
 
 	/**
 	 * 
@@ -27,33 +26,31 @@ public class SayHelloBehaviour extends TickerBehaviour{
 	 * @param myagent the agent who posses the behaviour
 	 *  
 	 */
-	public SayHelloBehaviour (final Agent myagent, List<String> receivers) {
-		super(myagent, 3000);
+	public SayHelloBehaviour (final Agent myagent,List<String> receivers) {
+		super(myagent);
 		this.receivers=receivers;	
 		//super(myagent);
 	}
 
 	@Override
-	public void onTick() {
+	public void action() {
+
+		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 		
-		//Si je suis en train de bouger
-		if ( ((ExploreCoopAgent)this.myAgent).move ) {
-			String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
-			
-			ACLMessage msg=new ACLMessage(ACLMessage.INFORM);
-			msg.setProtocol("ProtocolePoke");
-			msg.setSender(this.myAgent.getAID());
-			//System.out.println("Agent "+this.myAgent.getLocalName()+ " is trying to reach its friends");
-			msg.setContent("Hello World, I'm at "+myPosition);
+		ACLMessage msg=new ACLMessage(ACLMessage.INFORM);
+		msg.setProtocol("ProtocolePoke");
+		msg.setSender(this.myAgent.getAID());
+		System.out.println(this.myAgent.getLocalName()+ " ---> Is trying to reach its friends");
+		msg.setContent(this.myAgent.getLocalName()+" ---> Hello World, I'm at "+myPosition);
 
-			for (String agentName : receivers) {
-				msg.addReceiver(new AID(agentName,AID.ISLOCALNAME));
-			}
-			System.out.println(this.myAgent.getLocalName() + " say Hello");
-
-			//Mandatory to use this method (it takes into account the environment to decide if someone is reachable or not)
-			((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
+		for (String agentName : receivers) {
+			msg.addReceiver(new AID(agentName,AID.ISLOCALNAME));
 		}
+
+		//Mandatory to use this method (it takes into account the environment to decide if someone is reachable or not)
+		((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
+		
 		
 	}
+
 }

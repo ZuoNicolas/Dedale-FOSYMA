@@ -6,13 +6,13 @@ import java.util.List;
 import dataStructures.serializableGraph.SerializableSimpleGraph;
 
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
+import eu.su.mas.dedaleEtu.mas.agents.dummies.explo.fsmAgent;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
 
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.SimpleBehaviour;
-import jade.core.behaviours.TickerBehaviour;
+import jade.core.behaviours.OneShotBehaviour;
 import jade.lang.acl.ACLMessage;
 
 /**
@@ -23,7 +23,7 @@ import jade.lang.acl.ACLMessage;
  * @author hc
  *
  */
-public class ShareMapBehaviour extends SimpleBehaviour{
+public class ShareMapBehaviour extends OneShotBehaviour{
 	
 	private MapRepresentation myMap;
 	private List<String> receivers;
@@ -53,7 +53,7 @@ public class ShareMapBehaviour extends SimpleBehaviour{
 	public void action() {
 		//4) At each time step, the agent blindly send all its graph to its surrounding to illustrate how to share its knowledge (the topology currently) with the the others agents. 	
 		// If it was written properly, this sharing action should be in a dedicated behaviour set, the receivers be automatically computed, and only a subgraph would be shared.
-		
+		this.myMap = ((fsmAgent)this.myAgent).getMap();
 		System.out.println("ShareMapBehaviour is created by --->"+this.myAgent.getLocalName());
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 		msg.setProtocol("ProtocoleShareMap");
@@ -70,14 +70,6 @@ public class ShareMapBehaviour extends SimpleBehaviour{
 			e.printStackTrace();
 		}
 		((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
-		System.out.println(this.myAgent.getLocalName()+"<---- Map Sended");
-		finished = true;
-		
+		System.out.println(this.myAgent.getLocalName()+" ---> Map Sended");
 	}
-
-	@Override
-	public boolean done() {
-		return finished;
-	}
-
 }

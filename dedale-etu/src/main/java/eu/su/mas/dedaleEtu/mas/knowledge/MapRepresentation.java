@@ -24,6 +24,7 @@ import org.graphstream.ui.view.Viewer.CloseFramePolicy;
 import dataStructures.serializableGraph.*;
 import dataStructures.tuple.Couple;
 import javafx.application.Platform;
+import javafx.embed.swing.JFXPanel;
 
 /**
  * This simple topology representation only deals with the graph, not its content.</br>
@@ -61,17 +62,18 @@ public class MapRepresentation implements Serializable {
 	private Integer nbEdges;//used to generate the edges ids
 
 	private SerializableSimpleGraph<String, MapAttribute> sg;//used as a temporary dataStructure during migration
-
-
+	
 	public MapRepresentation() {
 		//System.setProperty("org.graphstream.ui.renderer","org.graphstream.ui.j2dviewer.J2DGraphRenderer");
 		System.setProperty("org.graphstream.ui", "javafx");
 		this.g= new SingleGraph("My world vision");
 		this.g.setAttribute("ui.stylesheet",nodeStyle);
 
+		
 		Platform.runLater(() -> {
 			openGui();
 		});
+		
 		//this.viewer = this.g.display();
 
 		this.nbEdges=0;
@@ -313,8 +315,5 @@ public class MapRepresentation implements Serializable {
 				.filter(n -> n.getAttribute("ui.class")==MapAttribute.open.toString())
 				.findAny()).isPresent();
 	}
-
-
-
 
 }

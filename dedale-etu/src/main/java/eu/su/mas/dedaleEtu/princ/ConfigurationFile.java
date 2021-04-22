@@ -76,9 +76,9 @@ public final class ConfigurationFile {
 	//public static String INSTANCE_TOPOLOGY="resources/topology/HouatTopology";
 	public static String INSTANCE_TOPOLOGY="resources/topology/map2018-topology-ica";
 	//public static String INSTANCE_TOPOLOGY="resources/topology/map2020-topologyExam1-tree.dgs";
-	//public static String INSTANCE_TOPOLOGY="resources/interlocking/mapInterlocking2-topology";
-	//public static String INSTANCE_TOPOLOGY="resources/map2018-topology";
-	//public static String INSTANCE_TOPOLOGY="resources/map2019-topologyExam1";
+	//public static String INSTANCE_TOPOLOGY="resources/topology/mapInterlocking2-topology";
+	//public static String INSTANCE_TOPOLOGY="resources/topology/map2018-topology";
+	//public static String INSTANCE_TOPOLOGY="resources/topology/map2019-topologyExam1";
 
 	
 	/**

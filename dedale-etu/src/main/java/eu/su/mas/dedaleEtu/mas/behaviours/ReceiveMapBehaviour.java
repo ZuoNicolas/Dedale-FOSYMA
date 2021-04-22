@@ -4,25 +4,27 @@ import java.util.List;
 
 import dataStructures.serializableGraph.SerializableSimpleGraph;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
-import eu.su.mas.dedaleEtu.mas.agents.dummies.explo.ExploreCoopAgent;
+import eu.su.mas.dedaleEtu.mas.agents.dummies.explo.fsmAgent;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.SimpleBehaviour;
+import jade.core.behaviours.OneShotBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
 
 
-public class ReceiveMapBehaviour extends SimpleBehaviour{
+public class ReceiveMapBehaviour extends OneShotBehaviour{
 
 	private static final long serialVersionUID = 95283913118770598L;
 	
-	private boolean finished=false;
 	
 	private MapRepresentation myMap;
+	
+	private boolean haveMsg=true;
 
+	private int exitValue;
 	/**
 	 * 
 	 * This behaviour is a one Shot.
@@ -31,47 +33,56 @@ public class ReceiveMapBehaviour extends SimpleBehaviour{
 	 */
 	public ReceiveMapBehaviour(final Agent myagent) {
 		super(myagent);
+		//this.start = (int) System.currentTimeMillis();
 	}
 
 
 	@SuppressWarnings("unchecked")
 	public void action() {
 		//1) receive the message
-
+		
+		this.exitValue=0;
+		
 		MessageTemplate msgTemplate=MessageTemplate.and(
 				MessageTemplate.MatchProtocol("ProtocoleShareMap"),
 				MessageTemplate.MatchPerformative(ACLMessage.INFORM));
 
 		ACLMessage msg=this.myAgent.receive(msgTemplate);
-
-
+		
 		if (msg != null) {
-			this.myMap = ((ExploreCoopAgent)this.myAgent).getMap();
-			System.out.println(this.myAgent.getLocalName()+"<----Map received from "+msg.getSender().getLocalName());
+			this.myMap = ((fsmAgent)this.myAgent).getMap();
+			System.out.println(this.myAgent.getLocalName()+" <--- Map received from "+msg.getSender().getLocalName());
 
 			SerializableSimpleGraph<String, MapAttribute> sgreceived=null;
 			try {
 				sgreceived = (SerializableSimpleGraph<String, MapAttribute>)msg.getContentObject();
 			} catch (UnreadableException e) {
-				// TODO Auto-generated catch block
+
 				e.printStackTrace();
 			}
 			this.myMap.mergeMap(sgreceived);
 			
-			((ExploreCoopAgent)this.myAgent).updateMap(this.myMap);
-			((ExploreCoopAgent)this.myAgent).succesMerge = true;
-			System.out.println(this.myAgent.getLocalName()+"<---End Map merge");
-			
-			this.finished = true;
+			((fsmAgent)this.myAgent).updateMap(this.myMap);
+			((fsmAgent)this.myAgent).succesMerge = true;
+			this.exitValue=1;
+			System.out.println(this.myAgent.getLocalName()+" <--- End Map merge");
 			
 		}else{
-			block();// the behaviour goes to sleep until the arrival of a new message in the agent's Inbox.
+			if ( !haveMsg ) {
+				haveMsg=true;
+				this.exitValue=1;
+				System.out.println(this.myAgent.getLocalName()+" ---> Map not received");
+				return ;
+			}
+			this.haveMsg=false;
+			block(5000);// the behaviour goes to sleep until the arrival of a new message in the agent's Inbox.
 		}
 
 	}
-	public boolean done() {
-		return finished;
+	
+	@Override
+	public int onEnd() {
+		return exitValue;
 	}
-
 
 }
