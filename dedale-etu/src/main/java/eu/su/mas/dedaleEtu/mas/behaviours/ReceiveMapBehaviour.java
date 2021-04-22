@@ -1,6 +1,7 @@
 package eu.su.mas.dedaleEtu.mas.behaviours;
 
 import java.util.List;
+import java.util.Random;
 
 import dataStructures.serializableGraph.SerializableSimpleGraph;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
@@ -63,7 +64,14 @@ public class ReceiveMapBehaviour extends OneShotBehaviour{
 			this.myMap.mergeMap(sgreceived);
 			
 			((fsmAgent)this.myAgent).updateMap(this.myMap);
-			((fsmAgent)this.myAgent).succesMerge = true;
+
+			String myAgent = this.myAgent.getLocalName();
+			String otherAgent = msg.getSender().getLocalName();
+			
+			if (myAgent.compareTo(otherAgent) > 0){
+				((fsmAgent)this.myAgent).succesMerge = true;
+			}
+			
 			this.exitValue=1;
 			System.out.println(this.myAgent.getLocalName()+" <--- End Map merge");
 			
@@ -71,6 +79,7 @@ public class ReceiveMapBehaviour extends OneShotBehaviour{
 			if ( !haveMsg ) {
 				haveMsg=true;
 				this.exitValue=1;
+				((fsmAgent)this.myAgent).succesMerge = false;
 				System.out.println(this.myAgent.getLocalName()+" ---> Map not received");
 				return ;
 			}

@@ -15,6 +15,7 @@ import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
+import eu.su.mas.dedaleEtu.mas.agents.dummies.explo.ExploreCoopAgent;
 import eu.su.mas.dedaleEtu.mas.agents.dummies.explo.fsmAgent;
 import eu.su.mas.dedaleEtu.mas.behaviours.ShareMapBehaviour;
 
@@ -52,6 +53,8 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 	private MapRepresentation myMap;
 	
 	private int exitValue;
+	
+	private String nodeGoal = "";
 	
 	private int timer, start, now, nb_move_fail, max_move_fail=100;
 	
@@ -134,9 +137,26 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 					//	 otherwise choose one from the openNode list, compute the shortestPath and go for it
 					
 					if (nextNode==null){
+						if (((fsmAgent)this.myAgent).succesMerge) {
+							if (nodeGoal.equals("")) {
+								System.out.println(this.myAgent.getLocalName()+ "------first");
+								List<String> opennodes=this.myMap.getOpenNodes();
+								Random rand = new Random();
+								nodeGoal = opennodes.get(rand.nextInt(opennodes.size()));
+							}
+							nextNode = this.myMap.getShortestPath(myPosition, nodeGoal).get(0);
+							System.out.println(this.myAgent.getLocalName()+ "apres");
+							if(nextNode.equals(nodeGoal)) {
+								System.out.println(this.myAgent.getLocalName()+ "end");
+								((fsmAgent)this.myAgent).succesMerge = false;
+								nodeGoal = "";
+							}
+						}
+						else {
 						//no directly accessible openNode
 						//chose one, compute the path and take the first step.
 						nextNode=this.myMap.getShortestPathToClosestOpenNode(myPosition).get(0);//getShortestPath(myPosition,this.openNodes.get(0)).get(0);
+						}
 						//System.out.println(this.myAgent.getLocalName()+"-- list= "+this.myMap.getOpenNodes()+"| nextNode: "+nextNode+ " actual node :"+myPosition);
 					}else {
 						//System.out.println("nextNode notNUll - "+this.myAgent.getLocalName()+"-- list= "+this.myMap.getOpenNodes()+"\n -- nextNode: "+nextNode + " actual node :"+myPosition);

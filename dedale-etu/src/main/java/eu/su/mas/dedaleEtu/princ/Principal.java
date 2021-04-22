@@ -412,7 +412,7 @@ public class Principal {
 		/*********
 //		 * AGENT Explo6
 		 *********/
-		/*
+		
 		//1) Get the container where the agent will appear
 		c = containerList.get(ConfigurationFile.LOCAL_CONTAINER2_NAME);
 		Assert.assertNotNull("This container does not exist",c);
@@ -427,7 +427,7 @@ public class Principal {
 		ag=createNewDedaleAgent(c, agentName, fsmAgent.class.getName(), entityParametersExplo6);//ExploreSoloAgent
 		
 		agentList.add(ag);
-		*/
+		
 	/***********************************************************************
 	 * Type of agents used when you collect and gather treasures on the map
 	 ***********************************************************************/
