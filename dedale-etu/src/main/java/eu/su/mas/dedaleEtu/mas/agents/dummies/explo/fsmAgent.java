@@ -5,6 +5,7 @@ import java.util.List;
 
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedale.mas.agent.behaviours.startMyBehaviours;
+import eu.su.mas.dedaleEtu.mas.behaviours.DumbChaseBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.EndBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.ExploCoopBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.InitMapBehaviour;
@@ -36,7 +37,8 @@ public class fsmAgent extends AbstractDedaleAgent {
 	private static final String B = "Poke";
 	private static final String C = "ShareMap";
 	private static final String D = "ReceiveMap";
-	private static final String E = "End";
+	private static final String E = "Chase";
+	private static final String F = "End";
 
 	/**
 	 * This method is automatically called when "agent".start() is executed.
@@ -71,7 +73,8 @@ public class fsmAgent extends AbstractDedaleAgent {
 		fsm.registerState(new SayHelloBehaviour(this, list_agentNames), B);
 		fsm.registerState(new ShareMapBehaviour(this, this.myMap, this.list_agentNames), C);
 		fsm.registerState(new ReceiveMapBehaviour(this), D);
-		fsm.registerLastState(new EndBehaviour(), E);
+		fsm.registerState(new DumbChaseBehaviour(this,this.myMap, PokeTime), E);
+		fsm.registerLastState(new EndBehaviour(), F);
 		// Register the transitions
 		fsm.registerDefaultTransition(A,A);//Back to explo
 		fsm.registerTransition(A,B, 1) ;//Cond 1, poke every PokeTime
@@ -81,7 +84,9 @@ public class fsmAgent extends AbstractDedaleAgent {
 		fsm.registerDefaultTransition(D,D) ;//wait to receive a msg
 		fsm.registerTransition(D,A, 1) ;//Back to explo
 		fsm.registerTransition(A,E, 3) ;//Cond 3, End Explo
-	
+		fsm.registerDefaultTransition(E,E) ;//Back to Chase
+		fsm.registerTransition(E,F, 1) ;//Cond 1, End Chase
+		
 		this.lb=new ArrayList<Behaviour>();
 		this.lb.add(new InitMapBehaviour());
 		this.lb.add(fsm);

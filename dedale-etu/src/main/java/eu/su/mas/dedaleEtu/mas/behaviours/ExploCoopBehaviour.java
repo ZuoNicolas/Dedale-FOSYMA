@@ -56,10 +56,9 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 	
 	private String nodeGoal = "";
 	
-	private int timer, start, now, nb_move_fail, max_move_fail=100;
+	private int timer, start, now, nb_move_fail, max_move_fail=10;
 	
 	private String oldNode="";
-
 /**
  * 
  * @param myagent
@@ -99,7 +98,7 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 				 * Just added here to let you see what the agent is doing, otherwise he will be too quick
 				 */
 				try {
-					this.myAgent.doWait(500);
+					this.myAgent.doWait(200);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -116,10 +115,12 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 					List<Couple<Observation, Integer>> list = node.getRight();
 					boolean isNewNode=this.myMap.addNewNode(nodeId);
 					//the node may exist, but not necessarily the edge
+					/*
 			        for(Couple<Observation, Integer> model : list) {
-			            //System.out.print("Observation "+model.getLeft()+ " Integer "+model.getRight());
+			            System.out.print("Observation "+model.getLeft()+ " Integer "+model.getRight()+" | ");
 			        }
-					//System.out.println(this.myAgent.getLocalName()+" nodeID "+nodeId);
+			        */
+			        //System.out.println(this.myAgent.getLocalName()+" nodeID "+nodeId);
 					if (myPosition!=nodeId) {
 						this.myMap.addEdge(myPosition, nodeId);
 						if (nextNode==null && isNewNode) nextNode=nodeId;
@@ -138,16 +139,13 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 					
 					if (nextNode==null){
 						if (((fsmAgent)this.myAgent).succesMerge) {
-							if (nodeGoal.equals("")) {
-								System.out.println(this.myAgent.getLocalName()+ "------first");
+							if (nodeGoal.equals("") || oldNode.equals(myPosition)) {
 								List<String> opennodes=this.myMap.getOpenNodes();
 								Random rand = new Random();
 								nodeGoal = opennodes.get(rand.nextInt(opennodes.size()));
 							}
 							nextNode = this.myMap.getShortestPath(myPosition, nodeGoal).get(0);
-							System.out.println(this.myAgent.getLocalName()+ "apres");
 							if(nextNode.equals(nodeGoal)) {
-								System.out.println(this.myAgent.getLocalName()+ "end");
 								((fsmAgent)this.myAgent).succesMerge = false;
 								nodeGoal = "";
 							}
@@ -197,6 +195,7 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 						return ;
 					}
 					nb_move_fail++;
+					System.out.print(nb_move_fail);
 				}else {
 					oldNode = myPosition;
 					nb_move_fail = 0;
@@ -213,7 +212,7 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 				MessageTemplate.MatchPerformative(ACLMessage.INFORM));
 
 		ACLMessage msgMap=this.myAgent.receive(msgTemplateMap);
-		
+		//System.out.println(this.myAgent.getLocalName() + " --> "+this.myAgent.getCurQueueSize());
 		if (msgMap != null) {
 			//System.out.println(this.myAgent.getLocalName() + " --> Receive a Map (stop move)");
 			this.exitValue = 2;//Go to share map
@@ -245,7 +244,7 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 		int res = this.now - this.start;
 		//System.out.println("Timer : "+res);
 		if ( res > this.timer) {
-			System.out.println(this.myAgent.getLocalName()+" ---> Take a break to breathe");
+			//System.out.println(this.myAgent.getLocalName()+" ---> Take a break to breathe");
 			this.exitValue = 1;//Go to say hello, to know if there are friends nearby.
 			this.start = 0;
 			return true;
