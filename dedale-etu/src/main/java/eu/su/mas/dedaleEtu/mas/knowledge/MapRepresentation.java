@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.graphstream.algorithm.Dijkstra;
 import org.graphstream.graph.Edge;
@@ -23,6 +24,8 @@ import org.graphstream.ui.view.Viewer.CloseFramePolicy;
 
 import dataStructures.serializableGraph.*;
 import dataStructures.tuple.Couple;
+import eu.su.mas.dedale.mas.AbstractDedaleAgent;
+import jade.core.Agent;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 
@@ -57,11 +60,11 @@ public class MapRepresentation implements Serializable {
 	private String nodeStyle_agent = "node.open {"+"fill-color: blue;"+"}";
 	private String nodeStyle=defaultNodeStyle+nodeStyle_agent+nodeStyle_open;
 
-	private Graph g; //data structure non serializable
+	private Graph g,g2; //data structure non serializable
 	private Viewer viewer; //ref to the display,  non serializable
-	private Integer nbEdges;//used to generate the edges ids
+	private Integer nbEdges, nbEdges2;//used to generate the edges ids
 
-	private SerializableSimpleGraph<String, MapAttribute> sg;//used as a temporary dataStructure during migration
+	private SerializableSimpleGraph<String, MapAttribute> sg, clone;//used as a temporary dataStructure during migration
 	
 	public MapRepresentation() {
 		//System.setProperty("org.graphstream.ui.renderer","org.graphstream.ui.j2dviewer.J2DGraphRenderer");
@@ -320,6 +323,117 @@ public class MapRepresentation implements Serializable {
 		return (this.g.nodes()
 				.filter(n -> n.getAttribute("ui.class")==MapAttribute.open.toString())
 				.findAny()).isPresent();
+	}
+	
+	public Stream<Node> getNeighborNode(String node){
+		Node n = g.getNode(node);
+		Stream<Node> list = n.neighborNodes();
+		//System.out.println("************************* My Node : "+n);
+        //list.forEach(s -> System.out.println("----------------------- Neigh : "+s));
+
+		return list;
+	}
+	
+	public Node getNode(String node) {
+		return g.getNode(node);
+	}
+	
+	private void serializeGraphTopologyClone() {
+		this.clone= new SerializableSimpleGraph<String,MapAttribute>();
+		Iterator<Node> iter=this.g.iterator();
+		while(iter.hasNext()){
+			Node n=iter.next();
+			clone.addNode(n.getId(),MapAttribute.valueOf((String)n.getAttribute("ui.class")));
+		}
+		Iterator<Edge> iterE=this.g.edges().iterator();
+		while (iterE.hasNext()){
+			Edge e=iterE.next();
+			Node sn=e.getSourceNode();
+			Node tn=e.getTargetNode();
+			clone.addEdge(e.getId(), sn.getId(), tn.getId());
+		}	
+	}
+
+	public synchronized void addEdgeClone(String idNode1,String idNode2){
+		this.nbEdges2++;
+		try {
+			this.g2.addEdge(this.nbEdges2.toString(), idNode1, idNode2);
+		}catch (IdAlreadyInUseException e1) {
+			System.err.println("ID existing");
+			System.exit(1);
+		}catch (EdgeRejectedException e2) {
+			this.nbEdges2--;
+		} catch(ElementNotFoundException e3){
+
+		}
+	}
+	
+	public void mergeMapClone(SerializableSimpleGraph<String, MapAttribute> sgreceived) {
+		//System.out.println("You should decide what you want to save and how");
+		//System.out.println("We currently blindy add the topology");
+		this.g2 = null;
+		for (SerializableNode<String, MapAttribute> n: sgreceived.getAllNodes()){
+			//System.out.println(n);
+			boolean alreadyIn =false;
+			//1 Add the node
+			Node newnode=null;
+			try {
+				newnode=this.g2.addNode(n.getNodeId());
+			}	catch(IdAlreadyInUseException e) {
+				alreadyIn=true;
+				//System.out.println("Already in"+n.getNodeId());
+			}
+			if (!alreadyIn) {
+				newnode.setAttribute("ui.label", newnode.getId());
+				newnode.setAttribute("ui.class", n.getNodeContent().toString());
+			}else{
+				newnode=this.g2.getNode(n.getNodeId());
+				//3 check its attribute. If it is below the one received, update it.
+				if (((String) newnode.getAttribute("ui.class"))==MapAttribute.closed.toString() || n.getNodeContent().toString()==MapAttribute.closed.toString()) {
+					newnode.setAttribute("ui.class",MapAttribute.closed.toString());
+				}
+			}
+		}
+
+		//4 now that all nodes are added, we can add edges
+		for (SerializableNode<String, MapAttribute> n: sgreceived.getAllNodes()){
+			for(String s:sgreceived.getEdges(n.getNodeId())){
+				addEdgeClone(n.getNodeId(),s);
+			}
+		}
+		//System.out.println("Merge done");
+	}
+	
+	public synchronized List<String> getShortestPathWithBlockedAgent(String idFrom,String idTo, List<Agent> agents){
+		serializeGraphTopologyClone();
+		mergeMapClone(clone);
+		
+		for(Agent a: agents) {
+			g2.removeNode(((AbstractDedaleAgent) a).getCurrentPosition());
+		}
+		List<String> shortestPath=new ArrayList<String>();
+
+		Dijkstra dijkstra = new Dijkstra();//number of edge
+		dijkstra.init(g2);
+		dijkstra.setSource(g2.getNode(idFrom));
+		dijkstra.compute();//compute the distance to all nodes from idFrom
+		List<Node> path=dijkstra.getPath(g2.getNode(idTo)).getNodePath(); //the shortest path from idFrom to idTo
+		Iterator<Node> iter=path.iterator();
+		while (iter.hasNext()){
+			shortestPath.add(iter.next().getId());
+		}
+		dijkstra.clear();
+		if (shortestPath.isEmpty()) {//The openNode is not currently reachable
+			return null;
+		}else {
+			shortestPath.remove(0);//remove the current position
+		}
+		
+		//Re add deleted Node
+		this.g2=null;
+		this.clone=null;
+		
+		return shortestPath;
 	}
 
 }

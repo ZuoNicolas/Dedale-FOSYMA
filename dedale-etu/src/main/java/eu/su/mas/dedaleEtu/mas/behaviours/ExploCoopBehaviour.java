@@ -56,9 +56,11 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 	
 	private String nodeGoal = "";
 	
-	private int timer, start, now, nb_move_fail, max_move_fail=10, timer_spam = 1000;
+	private int timer, start, now, nb_move_fail, max_move_fail=5, timer_spam = 1000;
 	
 	private String oldNode="";
+	
+	private boolean SuccessMove;
 	
 	private List<Couple<String,Integer>> list_spam = new ArrayList<>();
 /**
@@ -100,7 +102,7 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 				 * Just added here to let you see what the agent is doing, otherwise he will be too quick
 				 */
 				try {
-					this.myAgent.doWait(800);
+					this.myAgent.doWait(10);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -132,7 +134,7 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 				//3) while openNodes is not empty, continues.
 				if (!this.myMap.hasOpenNode()){
 					//Explo finished
-					this.exitValue = 3;//End of exploration
+					this.exitValue = 4;//End of exploration
 					System.out.println(this.myAgent.getLocalName()+" - Exploration successufully done, behaviour removed.");
 				}else{
 					//4) select next move.
@@ -184,20 +186,21 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 	//					e.printStackTrace();
 	//				}
 	//				((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
-	
+
+					((fsmAgent)this.myAgent).nextNode=nextNode;
 					((fsmAgent)this.myAgent).updateMap(this.myMap);
-					((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);	
+					SuccessMove = ((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);	
 				}
 				
 				
-				if (oldNode.equals(myPosition)) {
+				if (!SuccessMove) {
 					if ( nb_move_fail >= max_move_fail) {
-						System.out.println(this.myAgent.getLocalName() + " --> I Blocked a Golem ! (stop move)");
+						System.out.println(this.myAgent.getLocalName() + " --> I probably blocked a Wumpus ! (stop move)");
 						this.exitValue = 3;
 						return ;
 					}
 					nb_move_fail++;
-					//System.out.print(nb_move_fail);
+					System.out.print(nb_move_fail);
 				}else {
 					oldNode = myPosition;
 					nb_move_fail = 0;

@@ -74,7 +74,7 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 				 * Just added here to let you see what the agent is doing, otherwise he will be too quick
 				 */
 				try {
-					this.myAgent.doWait(5000);
+					this.myAgent.doWait(1000);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -107,7 +107,7 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 				//	 otherwise choose one from the openNode list, compute the shortestPath and go for it
 				
 				if (nextNode==null){
-					if (nodeGoal.equals("") ) {
+					while(nodeGoal.equals("") || myPosition.equals(nodeGoal)) {
 						List<String> closednodes=this.myMap.getClosedNodes();
 						Random rand = new Random();
 						nodeGoal = closednodes.get(rand.nextInt(closednodes.size()));
