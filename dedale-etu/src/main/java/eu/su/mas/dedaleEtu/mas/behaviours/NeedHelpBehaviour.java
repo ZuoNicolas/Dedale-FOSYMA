@@ -28,7 +28,7 @@ public class NeedHelpBehaviour extends OneShotBehaviour {
 	private String myPosition;
 	private String nextNode;
 	private MapRepresentation myMap;
-	private List<Node> NodeToBlock, New;
+	private List<String> NodeToBlock, New;
 	private int exitValue;
 
 	private boolean SuccessMove;
@@ -54,8 +54,11 @@ public class NeedHelpBehaviour extends OneShotBehaviour {
     		
     		if(msgBlock != null) {
     			try {
-					Serializable New = msgBlock.getContentObject();
+					New = (List<String>) msgBlock.getContentObject();
 	    			System.out.println(this.myAgent.getLocalName() + " --> Receive serialized msg "+New);
+	    			for(String n:New) {
+	    				System.out.println(this.myAgent.getLocalName() + " --> "+n);
+	    			}
 				} catch (UnreadableException e) {
 					e.printStackTrace();
 				}

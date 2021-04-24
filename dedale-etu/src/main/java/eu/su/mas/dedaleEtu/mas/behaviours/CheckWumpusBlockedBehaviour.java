@@ -22,7 +22,8 @@ public class CheckWumpusBlockedBehaviour extends OneShotBehaviour {
 	private String myPosition;
 	private String nextNode;
 	private MapRepresentation myMap;
-	private List<Node> NeighborNode, NodeToBlock;
+	private List<Node> NeighborNode;
+	private List<String> NodeToBlock;
 	private int exitValue;
 	
 	private static final long serialVersionUID = 2364288375185614674L;
@@ -39,14 +40,14 @@ public class CheckWumpusBlockedBehaviour extends OneShotBehaviour {
 		nextNode = ((fsmAgent)this.myAgent).nextNode;
 		myMap = ((fsmAgent)this.myAgent).getMap();
 		NeighborNode =  myMap.getNeighborNode(nextNode).collect(Collectors.toList());
-		NodeToBlock = new ArrayList<Node>();
+		NodeToBlock = new ArrayList<String>();
 		
 		if(myMap.getNode(nextNode).getAttribute("ui.class").equals("closed")) {
 			
 	        for (Node n : NeighborNode) {
 	        	
 	            if( !n.toString().equals(myPosition) ) {
-	            	NodeToBlock.add(n);
+	            	NodeToBlock.add(n.getId());
 	            	System.out.println("Need to block node : "+n);
 	            }
 	            

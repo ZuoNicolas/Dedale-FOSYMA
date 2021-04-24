@@ -31,7 +31,7 @@ public class fsmAgent extends AbstractDedaleAgent {
 	private MapRepresentation myMap;
 	
 	public boolean move=true, succesMerge=false, changeNode=false;
-	public List<Node> NodeToBlock;
+	public List<String> NodeToBlock;
 	public String nextNode;
 	
 	private static final int PokeTime = 3000;
