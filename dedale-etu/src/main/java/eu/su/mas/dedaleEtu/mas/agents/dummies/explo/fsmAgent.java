@@ -32,7 +32,6 @@ public class fsmAgent extends AbstractDedaleAgent {
 	
 	private List<Behaviour> lb;
 	
-	
 	private static final String A = "Exploration";
 	private static final String B = "Poke";
 	private static final String C = "ShareMap";

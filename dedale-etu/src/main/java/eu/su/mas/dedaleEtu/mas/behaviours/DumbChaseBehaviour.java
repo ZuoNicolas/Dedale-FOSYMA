@@ -74,7 +74,7 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 				 * Just added here to let you see what the agent is doing, otherwise he will be too quick
 				 */
 				try {
-					this.myAgent.doWait(200);
+					this.myAgent.doWait(5000);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -108,9 +108,9 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 				
 				if (nextNode==null){
 					if (nodeGoal.equals("") ) {
-						List<String> opennodes=this.myMap.getClosedNodes();
+						List<String> closednodes=this.myMap.getClosedNodes();
 						Random rand = new Random();
-						nodeGoal = opennodes.get(rand.nextInt(opennodes.size()));
+						nodeGoal = closednodes.get(rand.nextInt(closednodes.size()));
 						System.out.println(this.myAgent.getLocalName()+" ---> Init a new nodeGoal("+nodeGoal+") to search Golem");
 					}
 					nextNode = this.myMap.getShortestPath(myPosition, nodeGoal).get(0);

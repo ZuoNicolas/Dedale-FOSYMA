@@ -285,12 +285,12 @@ public class Principal {
 		 *****************************************************/
 		
 		//1) Get the container where the agent will appear
-		/*
+
 		c = containerList.get(ConfigurationFile.LOCAL_CONTAINER2_NAME);
 		Assert.assertNotNull("This container does not exist",c);
 
 		//2) Give the name of your agent, MUST be the same as the one given in the entities file.
-		agentName="Golem";
+		agentName="Imhere";
 
 		//3) If you want to give specific parameters to your agent, add them here
 		Object [] entityParameters={"My parameters"};
@@ -298,11 +298,11 @@ public class Principal {
 		//4) Give the class name of your agent to let the system instantiate it
 		ag=createNewDedaleAgent(c, agentName, ControlledAgent.class.getName(), entityParameters);
 		agentList.add(ag);	
-		*/
+
 		/*********
 		 * GOLEM
 		 *********/
-		
+		/*
 		//1) Get the container where the agent will appear
 		c = containerList.get(ConfigurationFile.LOCAL_CONTAINER2_NAME);
 		Assert.assertNotNull("This container does not exist",c);
@@ -316,7 +316,7 @@ public class Principal {
 		//4) Give the class name of your agent to let the system instantiate it
 		ag=createNewDedaleAgent(c, agentName, DummyWumpusShift.class.getName(), entityParameters);
 		agentList.add(ag);	
-		
+		*/
 //		/*********
 //		 * AGENT Explo1
 //		 *********/
@@ -393,7 +393,7 @@ public class Principal {
 		/*********
 //		 * AGENT Explo5
 		 *********/
-		
+		/*
 		//1) Get the container where the agent will appear
 		c = containerList.get(ConfigurationFile.LOCAL_CONTAINER2_NAME);
 		Assert.assertNotNull("This container does not exist",c);
@@ -408,7 +408,7 @@ public class Principal {
 		ag=createNewDedaleAgent(c, agentName, fsmAgent.class.getName(), entityParametersExplo5);//ExploreSoloAgent
 		
 		agentList.add(ag);
-		
+		*/
 		/*********
 //		 * AGENT Explo6
 		 *********/

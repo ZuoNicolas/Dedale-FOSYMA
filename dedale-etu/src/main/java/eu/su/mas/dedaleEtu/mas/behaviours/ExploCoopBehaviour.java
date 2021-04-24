@@ -56,9 +56,11 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 	
 	private String nodeGoal = "";
 	
-	private int timer, start, now, nb_move_fail, max_move_fail=10;
+	private int timer, start, now, nb_move_fail, max_move_fail=10, timer_spam = 1000;
 	
 	private String oldNode="";
+	
+	private List<Couple<String,Integer>> list_spam = new ArrayList<>();
 /**
  * 
  * @param myagent
@@ -75,7 +77,7 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 	@Override
 	public void action() {
 		this.exitValue = 0;
-		
+		//list_spam.add(new Couple<>("teste", Integer.valueOf(5)));
 		if(checkMsg() || checkTimer()) {
 			return ;
 		}
@@ -98,7 +100,7 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 				 * Just added here to let you see what the agent is doing, otherwise he will be too quick
 				 */
 				try {
-					this.myAgent.doWait(200);
+					this.myAgent.doWait(800);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -195,7 +197,7 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 						return ;
 					}
 					nb_move_fail++;
-					System.out.print(nb_move_fail);
+					//System.out.print(nb_move_fail);
 				}else {
 					oldNode = myPosition;
 					nb_move_fail = 0;
@@ -213,10 +215,11 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 
 		ACLMessage msgMap=this.myAgent.receive(msgTemplateMap);
 		//System.out.println(this.myAgent.getLocalName() + " --> "+this.myAgent.getCurQueueSize());
-		if (msgMap != null) {
-			//System.out.println(this.myAgent.getLocalName() + " --> Receive a Map (stop move)");
+		if (msgMap != null && !containToList_spam(msgMap.getSender().getLocalName())) {
+			System.out.println(this.myAgent.getLocalName() + " --> Receive a Map (stop move)");
 			this.exitValue = 2;//Go to share map
 			this.start = 0;
+			list_spam.add(new Couple<>(msgMap.getSender().getLocalName(), Integer.valueOf((int) System.currentTimeMillis())));
 			((AbstractDedaleAgent)this.myAgent).postMessage(msgMap);
 			return true;
 		}
@@ -226,8 +229,9 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 		final ACLMessage msg = this.myAgent.receive(msgTemplate);
 
 		//If receive a message, don't move
-		if (msg != null) {
-			//System.out.println(this.myAgent.getLocalName() + " --> Receive a poke (stop move)");
+		if (msg != null && !containToList_spam(msg.getSender().getLocalName())) {
+			System.out.println(this.myAgent.getLocalName() + " --> Receive a poke (stop move)");
+			list_spam.add(new Couple<>(msg.getSender().getLocalName(), Integer.valueOf((int) System.currentTimeMillis())));
 			this.exitValue = 2;//Go to share map
 			this.start = 0;
 			return true;
@@ -237,6 +241,19 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 	}
 	
 	public boolean checkTimer() {
+		Iterator<Couple<String,  Integer>> iter=list_spam.iterator();
+		
+		while(iter.hasNext()){
+			Couple<String, Integer> agent = iter.next();
+			Integer time = agent.getRight();
+			this.now = (int) System.currentTimeMillis();
+			int res = this.now - time.intValue();
+			System.out.println(this.myAgent.getLocalName()+" ---> blocked "+ agent.getLeft()+" :"+res);
+			if ( res > this.timer_spam) {
+				System.out.println(this.myAgent.getLocalName()+" ---> remove blocked "+ agent.getLeft()+" :"+res);
+				iter.remove();
+			}
+		}
 		if (this.start == 0) {
 			this.start = (int) System.currentTimeMillis();
 		}
@@ -248,6 +265,19 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 			this.exitValue = 1;//Go to say hello, to know if there are friends nearby.
 			this.start = 0;
 			return true;
+		}
+		return false;
+	}
+	
+	public boolean containToList_spam(String agent_name) {
+		Iterator<Couple<String,  Integer>> iter=list_spam.iterator();
+
+		while(iter.hasNext()){
+			Couple<String, Integer> agent = iter.next();
+			String name= agent.getLeft();
+			if ( name.equals(agent_name)) {
+				return true;
+			}
 		}
 		return false;
 	}
