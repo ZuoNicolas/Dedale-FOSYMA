@@ -29,11 +29,13 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 	
 	private String nodeGoal = "";
 	
-	private int timer, start, now, nb_move_fail, max_move_fail=10;
+	private int timer, nb_move_fail, max_move_fail=10;
 	
 	private String oldNode="";
 	
 	private boolean firstTime=true;
+
+	private List<String> temp;
 	
 /**
  * 
@@ -45,7 +47,6 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 		super(myagent);
 		this.myMap=((fsmAgent)this.myAgent).getMap();
 		this.timer=timer;
-		this.start = 0;
 	}
 
 	@Override
@@ -57,7 +58,11 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 			System.out.println(this.myAgent.getLocalName()+" Start Chase !");
 		}
 		
-			
+		if(checkMsg()) {
+			return ;
+		}
+
+		
 		this.myMap = ((fsmAgent)this.myAgent).getMap();
 		
 		//If no msg and agent can move
@@ -65,6 +70,10 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 
 			//0) Retrieve the current position
 			String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
+			
+			if (myPosition.equals(((fsmAgent)this.myAgent).moveTo)) {
+				((fsmAgent)this.myAgent).moveTo = null;
+			}
 	
 			if (myPosition!=null){
 				//List of observable from the agent's current position
@@ -74,14 +83,14 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 				 * Just added here to let you see what the agent is doing, otherwise he will be too quick
 				 */
 				try {
-					this.myAgent.doWait(1000);
+					this.myAgent.doWait(500);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 	
 				//1) remove the current node from openlist and add it to closedNodes.
 				this.myMap.addNode(myPosition, MapAttribute.closed);
-	
+				
 				//2) get the surrounding nodes and, if not in closedNodes, add them to open nodes.
 				String nextNode=null;
 				Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
@@ -90,66 +99,55 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 					String nodeId= node.getLeft();
 					List<Couple<Observation, Integer>> list = node.getRight();
 					//the node may exist, but not necessarily the edge
-					/*
-			        for(Couple<Observation, Integer> model : list) {
-			        	obs = model.getLeft();
-			            System.out.print("Observation "+model.getLeft()+ " Integer "+model.getRight());
-			        }
-			        */
-					//System.out.println(this.myAgent.getLocalName()+" nodeID "+nodeId);
 					if (myPosition!=nodeId && nodeId!=oldNode && list.size()>0 ) {
-						if (nextNode==null) nextNode=nodeId;
+						if (nextNode==null && !((fsmAgent)this.myAgent).GolemPoop.contains(nextNode)) nextNode=nodeId;
 					}
 				}
 
 				//4) select next move.
 				//4.1 If there exist one open node directly reachable, go for it,
 				//	 otherwise choose one from the openNode list, compute the shortestPath and go for it
-				
-				if (nextNode==null){
+				if (((fsmAgent)this.myAgent).moveTo != null) {
+					List<String> chemin = myMap.getShortestPath(myPosition, ((fsmAgent)this.myAgent).moveTo, ((fsmAgent)this.myAgent).blockedAgent);
+					/*for(String c: chemin) {
+						System.out.println(this.myAgent.getLocalName()+" ---> Move "+c);
+					}*/
+					if(chemin != null) {
+						if(chemin.size()>0) {
+							nextNode = chemin.get(0);
+						}
+					}	
+				}
+				int lastExit = ((fsmAgent)this.myAgent).getFSM().getLastExitValue();
+
+				if (nextNode==null || lastExit == 1 || ((fsmAgent)this.myAgent).forceChangeNode){
+					((fsmAgent)this.myAgent).forceChangeNode = false;
 					while(nodeGoal.equals("") || myPosition.equals(nodeGoal)) {
 						List<String> closednodes=this.myMap.getClosedNodes();
 						Random rand = new Random();
 						nodeGoal = closednodes.get(rand.nextInt(closednodes.size()));
 						System.out.println(this.myAgent.getLocalName()+" ---> Init a new nodeGoal("+nodeGoal+") to search Golem");
 					}
-					nextNode = this.myMap.getShortestPath(myPosition, nodeGoal).get(0);
+					temp = this.myMap.getShortestPath(myPosition, nodeGoal, ((fsmAgent)this.myAgent).blockedAgent);
+					if (temp != null) {
+						if( temp.size()>0 ) {
+							nextNode = this.myMap.getShortestPath(myPosition, nodeGoal, ((fsmAgent)this.myAgent).blockedAgent).get(0);
+						}else {
+							return; //reset
+						}
+					}else {
+						return ;//reset
+					}
 					if(nextNode.equals(nodeGoal)) {
 						nodeGoal = "";
 						System.out.println(this.myAgent.getLocalName()+" ---> Arrived to nodeGoal("+nodeGoal+")");
 					}
 
-					//no directly accessible openNode
-					//chose one, compute the path and take the first step.
-					//nextNode=this.myMap.getShortestPathToClosestOpenNode(myPosition).get(0);//getShortestPath(myPosition,this.openNodes.get(0)).get(0);
-					//System.out.println(this.myAgent.getLocalName()+"-- list= "+this.myMap.getOpenNodes()+"| nextNode: "+nextNode+ " actual node :"+myPosition);
 				}else {
-					//System.out.println("nextNode notNUll - "+this.myAgent.getLocalName()+"-- list= "+this.myMap.getOpenNodes()+"\n -- nextNode: "+nextNode + " actual node :"+myPosition);
-					System.out.println(this.myAgent.getLocalName()+" ---> Find a Golem's poop");
+					//System.out.println(this.myAgent.getLocalName()+" ---> Find a Golem's poop");
 				}
-				//4) At each time step, the agent blindly send all its graph to its surrounding to illustrate how to share its knowledge (the topology currently) with the the others agents. 	
-				// If it was written properly, this sharing action should be in a dedicated behaviour set, the receivers be automatically computed, and only a subgraph would be shared.
-				/*
-				if (((ExploreCoopAgent)this.myAgent).changeNode) {
-					((ExploreCoopAgent)this.myAgent).changeNode = false;
-					nextNode = ((ExploreCoopAgent)this.myAgent).nextNode = nextNode;
-				}
-				*/
-//				ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-//				msg.setProtocol("SHARE-TOPO");
-//				msg.setSender(this.myAgent.getAID());
-//				if (this.myAgent.getLocalName().equals("1stAgent")) {
-//					msg.addReceiver(new AID("2ndAgent",false));
-//				}else {
-//					msg.addReceiver(new AID("1stAgent",false));
-//				}
-//				SerializableSimpleGraph<String, MapAttribute> sg=this.myMap.getSerializableGraph();
-//				try {					
-//					msg.setContentObject(sg);
-//				} catch (IOException e) {
-//					e.printStackTrace();
-//				}
-//				((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
+
+				((fsmAgent)this.myAgent).nextNode=nextNode;
 				((fsmAgent)this.myAgent).updateMap(this.myMap);
 				((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
 			}
@@ -157,19 +155,61 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 			
 			if (oldNode.equals(myPosition)) {
 				if ( nb_move_fail >= max_move_fail) {
-					System.out.println(this.myAgent.getLocalName() + " --> I Blocked a Golem ! (stop move)");
-					this.exitValue = 1;
+					nb_move_fail = 0;
+					System.out.println(this.myAgent.getLocalName() + " --> Something block me ! (stop move)");
+					this.exitValue = 3;
 					return ;
 				}
 				nb_move_fail++;
-				System.out.print(nb_move_fail);
+				//System.out.println(this.myAgent.getLocalName()+" : nb_move = "+nb_move_fail);
 			}else {
 				oldNode = myPosition;
 				nb_move_fail = 0;
 			}
 		}
 	}
+	
+		
+	public boolean checkMsg() {
+		
+		final MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("ProtocolePoke"), 
+				MessageTemplate.MatchPerformative(ACLMessage.INFORM) );	
+		final ACLMessage msg = this.myAgent.receive(msgTemplate);
 
+		//If receive a message, don't move
+		if (msg != null) {
+			System.out.println(this.myAgent.getLocalName() + " --> Receive a poke (stop move)");
+			this.exitValue = 4;//Go to share map
+			return false;
+		}
+		
+    	final MessageTemplate msgTemplateBlock = MessageTemplate.and(MessageTemplate.MatchProtocol("ProtocoleHelpBlockWumpus"),
+				MessageTemplate.MatchPerformative(ACLMessage.INFORM));	
+    	final ACLMessage msgBlock = this.myAgent.receive(msgTemplateBlock);
+    	
+    	if (msgBlock != null) {
+			System.out.println(this.myAgent.getLocalName() + " --> Receive a help bloc Wumpus protocole");
+			this.exitValue = 5;//Go to help block
+			return true;
+    	}
+    	
+    	final MessageTemplate msgSomeone = MessageTemplate.and(MessageTemplate.MatchProtocol("ProtocoleSomeone"),
+				MessageTemplate.MatchPerformative(ACLMessage.INFORM));	
+    	final ACLMessage msgS = this.myAgent.receive(msgSomeone);
+    	
+    	if (msgS != null) {
+    		String m =msgS.getContent();
+    		if ( m.equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())) {
+        		System.out.println(this.myAgent.getLocalName() + " --> Receive a check Someone msg");
+        		((fsmAgent)this.myAgent).agentToContact = msgS.getSender().getLocalName();
+        		exitValue = 2;
+        		return true;
+    		}
+    	}
+    	
+		return false;
+	}
+	
 	@Override
 	public int onEnd() {
 		return exitValue;

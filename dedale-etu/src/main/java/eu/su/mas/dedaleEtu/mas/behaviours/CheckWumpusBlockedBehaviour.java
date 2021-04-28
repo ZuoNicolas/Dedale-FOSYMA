@@ -35,6 +35,15 @@ public class CheckWumpusBlockedBehaviour extends OneShotBehaviour {
 	@Override
 	public void action() {
 		exitValue=0;
+		/*
+		int lastExit = ((fsmAgent)this.myAgent).getFSM().getLastExitValue();
+
+		if (lastExit == 3) {
+			exitValue = 4;
+			System.out.println(this.myAgent.getLocalName()+ " ---> check if is a agent or not");
+			return ;
+		}
+		*/
 		
 		myPosition = ((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 		nextNode = ((fsmAgent)this.myAgent).nextNode;

@@ -71,14 +71,21 @@ public class ReceiveMapBehaviour extends OneShotBehaviour{
 			if (myAgent.compareTo(otherAgent) > 0){
 				((fsmAgent)this.myAgent).succesMerge = true;
 			}
-			
-			this.exitValue=1;
+			if( ((fsmAgent)this.myAgent).successBlock) {
+				this.exitValue = 2;
+			}else {
+				this.exitValue=1;
+			}
 			System.out.println(this.myAgent.getLocalName()+" <--- End Map merge");
 			
 		}else{
 			if ( !haveMsg ) {
 				haveMsg=true;
-				this.exitValue=1;
+				if( ((fsmAgent)this.myAgent).successBlock) {
+					this.exitValue = 2;
+				}else {
+					this.exitValue=1;
+				}
 				((fsmAgent)this.myAgent).succesMerge = false;
 				System.out.println(this.myAgent.getLocalName()+" ---> Map not received");
 				return ;

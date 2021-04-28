@@ -11,14 +11,18 @@ import eu.su.mas.dedaleEtu.mas.behaviours.CheckWumpusBlockedBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.DumbChaseBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.EndBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.ExploCoopBehaviour;
+import eu.su.mas.dedaleEtu.mas.behaviours.ImNotWumpus;
 import eu.su.mas.dedaleEtu.mas.behaviours.InitMapBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.NeedHelpBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.ReceiveMapBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.SayHelloBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.ShareMapBehaviour;
+import eu.su.mas.dedaleEtu.mas.behaviours.SomethingBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.StrangeWaitBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.SuccessBlockBehaviour;
+import eu.su.mas.dedaleEtu.mas.behaviours.WaitSomethingBehaviour;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
+import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.FSMBehaviour;
 
@@ -30,9 +34,9 @@ public class fsmAgent extends AbstractDedaleAgent {
 	private static final long serialVersionUID = 1161691655438824095L;
 	private MapRepresentation myMap;
 	
-	public boolean move=true, succesMerge=false, changeNode=false;
-	public List<String> NodeToBlock;
-	public String nextNode;
+	public boolean move=true, succesMerge=false, changeNode=false, successBlock=false, forceChangeNode=false, endExplo=false;
+	public List<String> NodeToBlock, blockedAgent= new ArrayList<String>(), GolemPoop = new ArrayList<String>();
+	public String nextNode, agentToContact, moveTo;
 	
 	private static final int PokeTime = 3000;
 	
@@ -42,6 +46,9 @@ public class fsmAgent extends AbstractDedaleAgent {
 	
 	private List<Behaviour> lb;
 	
+	private FSMBehaviour fsm;
+	
+	private static final String INIT = "initMap";
 	private static final String A = "Exploration";
 	private static final String B = "Poke";
 	private static final String C = "ShareMap";
@@ -51,6 +58,9 @@ public class fsmAgent extends AbstractDedaleAgent {
 	private static final String G = "SuccessBlock";
 	private static final String H = "NeedHelpToBlock";
 	private static final String I = "StrangeWait";
+	private static final String J = "NotGolem";
+	private static final String K = "Semething";
+	private static final String L = "WaitSomething";
 	private static final String Z = "End";
 
 	/**
@@ -81,9 +91,10 @@ public class fsmAgent extends AbstractDedaleAgent {
 		this.nbAgent = agentNames.size();
 		this.list_agentNames = agentNames;
 
-		FSMBehaviour fsm = new FSMBehaviour(this);
+		fsm = new FSMBehaviour(this);
 		// Define the different states and behaviours
-		fsm.registerFirstState(new ExploCoopBehaviour(this,this.myMap, PokeTime), A);
+		fsm.registerFirstState(new InitMapBehaviour(),INIT);
+		fsm.registerState(new ExploCoopBehaviour(this,this.myMap, PokeTime), A);
 		fsm.registerState(new SayHelloBehaviour(this, list_agentNames), B);
 		fsm.registerState(new ShareMapBehaviour(this, this.myMap, this.list_agentNames), C);
 		fsm.registerState(new ReceiveMapBehaviour(this), D);
@@ -92,8 +103,12 @@ public class fsmAgent extends AbstractDedaleAgent {
 		fsm.registerState(new SuccessBlockBehaviour(this),G);
 		fsm.registerState(new NeedHelpBehaviour(this),H);
 		fsm.registerState(new StrangeWaitBehaviour(this),I);
+		fsm.registerState(new ImNotWumpus(),J);
+		fsm.registerState(new SomethingBehaviour(),K);
+		fsm.registerState(new WaitSomethingBehaviour(),L);
 		fsm.registerLastState(new EndBehaviour(), Z);
 		// Register the transitions
+		fsm.registerDefaultTransition(INIT,A);//Wait to receive map
 		fsm.registerDefaultTransition(A,A);//Back to explo
 		fsm.registerTransition(A,B, 1) ;//Cond 1, poke every PokeTime
 		fsm.registerDefaultTransition(B,A);//Back to explo
@@ -101,8 +116,10 @@ public class fsmAgent extends AbstractDedaleAgent {
 		fsm.registerDefaultTransition(C,D);//Wait to receive map
 		fsm.registerDefaultTransition(D,D) ;//wait to receive a msg
 		fsm.registerTransition(D,A, 1) ;//Back to explo
+		fsm.registerTransition(D,G, 2) ;//Cond 5, Go to help block
 		fsm.registerTransition(A,E, 4) ;//Cond 4, End Explo
 		fsm.registerTransition(A,F, 3) ;//Cond 3, Check Wumpus
+		fsm.registerTransition(A,H, 5) ;//Cond 5, Go to help block
 		fsm.registerDefaultTransition(F,A) ;//Back to Explo
 		fsm.registerDefaultTransition(E,E) ;//Back to Chase
 		
@@ -111,16 +128,31 @@ public class fsmAgent extends AbstractDedaleAgent {
 		fsm.registerTransition(F,I, 3) ;//Cond 3, got strange wait
 		
 		fsm.registerTransition(H,G, 1) ;//Cond 1, got strange wait
+		fsm.registerTransition(H,A, 2) ;//Cond 1, back to Explo
+		fsm.registerTransition(H,E, 3) ;//Cond 1, back to Explo
 		fsm.registerTransition(I,A, 1) ;//Cond 1, back to Explo
+		
+		fsm.registerTransition(G,C, 1) ;//Cond 1, got strange wait
+		fsm.registerTransition(G,A, 2) ;//Cond 1, got strange wait
 		
 		fsm.registerDefaultTransition(G,G) ;//wait to success block
 		fsm.registerDefaultTransition(H,H) ;//wait to need help block
 		fsm.registerDefaultTransition(I,I) ;//wait to strange Wait
 		
+		//CHECK SOMETHING
+		fsm.registerTransition(E,J, 2) ;//Cond 3, got strange wait
+		fsm.registerDefaultTransition(J,E) ;//wait to success block
+		fsm.registerTransition(E,K, 3) ;//Cond 3, got strange wait
+		fsm.registerTransition(E,C, 4) ;//Cond 3, got strange wait
+		fsm.registerDefaultTransition(K,J) ;//wait to success block
+		fsm.registerTransition(J,L, 1) ;//Cond 3, got strange wait
+		fsm.registerTransition(L,E, 1) ;//Cond 3, got strange wait
+		fsm.registerTransition(L,G, 2) ;//Cond 3, got strange wait
+		fsm.registerDefaultTransition(L,L) ;//wait to success block
+		
 		fsm.registerTransition(E,Z, 1) ;//Cond 1, End Chase
 		
 		this.lb=new ArrayList<Behaviour>();
-		this.lb.add(new InitMapBehaviour());
 		this.lb.add(fsm);
 		addBehaviour(new startMyBehaviours(this,this.lb));
 
@@ -153,5 +185,9 @@ public class fsmAgent extends AbstractDedaleAgent {
 	
 	public int getNbAgent() {
 		return this.nbAgent;
+	}
+	
+	public FSMBehaviour getFSM() {
+		return fsm;
 	}
 }

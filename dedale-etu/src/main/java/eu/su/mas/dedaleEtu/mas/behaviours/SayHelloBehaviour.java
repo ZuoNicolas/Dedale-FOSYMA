@@ -40,7 +40,7 @@ public class SayHelloBehaviour extends OneShotBehaviour{
 		ACLMessage msg=new ACLMessage(ACLMessage.INFORM);
 		msg.setProtocol("ProtocolePoke");
 		msg.setSender(this.myAgent.getAID());
-		System.out.println(this.myAgent.getLocalName()+ " ---> Is trying to reach its friends");
+		//System.out.println(this.myAgent.getLocalName()+ " ---> Is trying to reach its friends");
 		msg.setContent(this.myAgent.getLocalName()+" ---> Hello World, I'm at "+myPosition);
 
 		for (String agentName : receivers) {

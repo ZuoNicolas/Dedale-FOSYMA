@@ -62,7 +62,7 @@ public class MapRepresentation implements Serializable {
 
 	private Graph g,g2; //data structure non serializable
 	private Viewer viewer; //ref to the display,  non serializable
-	private Integer nbEdges, nbEdges2;//used to generate the edges ids
+	private Integer nbEdges, nbEdges2 = 0;//used to generate the edges ids
 
 	private SerializableSimpleGraph<String, MapAttribute> sg, clone;//used as a temporary dataStructure during migration
 	
@@ -140,41 +140,59 @@ public class MapRepresentation implements Serializable {
 	 * @param idTo id of the destination node
 	 * @return the list of nodes to follow, null if the targeted node is not currently reachable
 	 */
-	public synchronized List<String> getShortestPath(String idFrom,String idTo){
+	public synchronized List<String> getShortestPath(String idFrom,String idTo, List<String> agents){
+		serializeGraphTopologyClone();
+		mergeMapClone(clone);
+		for(String a: agents) {
+			try {
+				g2.removeNode(a);
+			}catch(ElementNotFoundException e) {
+				
+			}
+		}
 		List<String> shortestPath=new ArrayList<String>();
 
 		Dijkstra dijkstra = new Dijkstra();//number of edge
-		dijkstra.init(g);
-		dijkstra.setSource(g.getNode(idFrom));
-		dijkstra.compute();//compute the distance to all nodes from idFrom
-		List<Node> path=dijkstra.getPath(g.getNode(idTo)).getNodePath(); //the shortest path from idFrom to idTo
-		Iterator<Node> iter=path.iterator();
-		while (iter.hasNext()){
-			shortestPath.add(iter.next().getId());
-		}
-		dijkstra.clear();
-		if (shortestPath.isEmpty()) {//The openNode is not currently reachable
+		dijkstra.init(g2);
+		dijkstra.setSource(g2.getNode(idFrom));
+		try {
+			dijkstra.compute();//compute the distance to all nodes from idFrom
+		
+			List<Node> path=dijkstra.getPath(g2.getNode(idTo)).getNodePath(); //the shortest path from idFrom to idTo
+			Iterator<Node> iter=path.iterator();
+			while (iter.hasNext()){
+				shortestPath.add(iter.next().getId());
+			}
+			dijkstra.clear();
+			//Re add deleted Node
+			this.g2=null;
+			this.clone=null;
+			nbEdges2 = 0;
+			if (shortestPath.isEmpty()) {//The openNode is not currently reachable
+				return null;
+			}else {
+				shortestPath.remove(0);//remove the current position
+			}
+			return shortestPath;
+		}catch(Exception e) { //Error init path, just return null
 			return null;
-		}else {
-			shortestPath.remove(0);//remove the current position
 		}
-		return shortestPath;
 	}
 
-	public List<String> getShortestPathToClosestOpenNode(String myPosition) {
+	public List<String> getShortestPathToClosestOpenNode(String myPosition, List<String> agents) {
 		//1) Get all openNodes
 		List<String> opennodes=getOpenNodes();
 
 		//2) select the closest one
 		List<Couple<String,Integer>> lc=
 				opennodes.stream()
-				.map(on -> (getShortestPath(myPosition,on)!=null)? new Couple<String, Integer>(on,getShortestPath(myPosition,on).size()): new Couple<String, Integer>(on,Integer.MAX_VALUE))//some nodes my be unreachable if the agents do not share at least one common node.
+				.map(on -> (getShortestPath(myPosition,on, agents)!=null)? new Couple<String, Integer>(on,getShortestPath(myPosition,on, agents).size()): new Couple<String, Integer>(on,Integer.MAX_VALUE))//some nodes my be unreachable if the agents do not share at least one common node.
 				.collect(Collectors.toList());
 
 		Optional<Couple<String,Integer>> closest=lc.stream().min(Comparator.comparing(Couple::getRight));
 		//3) Compute shorterPath
 
-		return getShortestPath(myPosition,closest.get().getLeft());
+		return getShortestPath(myPosition,closest.get().getLeft(), agents);
 	}
 
 
@@ -371,7 +389,7 @@ public class MapRepresentation implements Serializable {
 	public void mergeMapClone(SerializableSimpleGraph<String, MapAttribute> sgreceived) {
 		//System.out.println("You should decide what you want to save and how");
 		//System.out.println("We currently blindy add the topology");
-		this.g2 = null;
+		this.g2 = new SingleGraph("My world vision2");
 		for (SerializableNode<String, MapAttribute> n: sgreceived.getAllNodes()){
 			//System.out.println(n);
 			boolean alreadyIn =false;
@@ -404,13 +422,17 @@ public class MapRepresentation implements Serializable {
 		//System.out.println("Merge done");
 	}
 	
-	public synchronized List<String> getShortestPathWithBlockedAgent(String idFrom,String idTo, List<Agent> agents){
-		serializeGraphTopologyClone();
-		mergeMapClone(clone);
-		
-		for(Agent a: agents) {
-			g2.removeNode(((AbstractDedaleAgent) a).getCurrentPosition());
+	public synchronized List<String> getShortestPathWithBlockedAgent(String idFrom,String idTo, List<String> agents){
+		if(agents.size()==0) {
+			g2=g;
+		}else {
+			serializeGraphTopologyClone();
+			mergeMapClone(clone);
+			for(String a: agents) {
+				g2.removeNode(a);
+			}
 		}
+
 		List<String> shortestPath=new ArrayList<String>();
 
 		Dijkstra dijkstra = new Dijkstra();//number of edge
@@ -432,6 +454,7 @@ public class MapRepresentation implements Serializable {
 		//Re add deleted Node
 		this.g2=null;
 		this.clone=null;
+		nbEdges2 = 0;
 		
 		return shortestPath;
 	}
