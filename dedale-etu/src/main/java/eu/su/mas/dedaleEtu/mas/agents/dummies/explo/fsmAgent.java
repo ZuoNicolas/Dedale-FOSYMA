@@ -13,6 +13,7 @@ import eu.su.mas.dedaleEtu.mas.behaviours.EndBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.ExploCoopBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.ImNotWumpus;
 import eu.su.mas.dedaleEtu.mas.behaviours.InitMapBehaviour;
+import eu.su.mas.dedaleEtu.mas.behaviours.MoveToBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.NeedHelpBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.ReceiveMapBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.SayHelloBehaviour;
@@ -40,6 +41,9 @@ public class fsmAgent extends AbstractDedaleAgent {
 	
 	private static final int PokeTime = 3000;
 	
+	public final int AgentSpeed=300;//doWait every AgentSpeed ms
+	public final int AgentSensitivity=30;//number of times it is blocked before checking if it is a golem
+	
 	private int nbAgent;
 	
 	private List<String> list_agentNames;
@@ -61,6 +65,7 @@ public class fsmAgent extends AbstractDedaleAgent {
 	private static final String J = "NotGolem";
 	private static final String K = "Semething";
 	private static final String L = "WaitSomething";
+	private static final String M = "MoveTo";
 	private static final String Z = "End";
 
 	/**
@@ -106,6 +111,7 @@ public class fsmAgent extends AbstractDedaleAgent {
 		fsm.registerState(new ImNotWumpus(),J);
 		fsm.registerState(new SomethingBehaviour(),K);
 		fsm.registerState(new WaitSomethingBehaviour(),L);
+		fsm.registerState(new MoveToBehaviour(),M);
 		fsm.registerLastState(new EndBehaviour(), Z);
 		// Register the transitions
 		fsm.registerDefaultTransition(INIT,A);//Wait to receive map
@@ -140,15 +146,22 @@ public class fsmAgent extends AbstractDedaleAgent {
 		fsm.registerDefaultTransition(I,I) ;//wait to strange Wait
 		
 		//CHECK SOMETHING
-		fsm.registerTransition(E,J, 2) ;//Cond 3, got strange wait
+		fsm.registerTransition(E,F, 2) ;//Cond 3, got strange wait
 		fsm.registerDefaultTransition(J,E) ;//wait to success block
-		fsm.registerTransition(E,K, 3) ;//Cond 3, got strange wait
+		fsm.registerTransition(E,F, 3) ;//Cond 3, got strange wait
 		fsm.registerTransition(E,C, 4) ;//Cond 3, got strange wait
 		fsm.registerDefaultTransition(K,J) ;//wait to success block
 		fsm.registerTransition(J,L, 1) ;//Cond 3, got strange wait
 		fsm.registerTransition(L,E, 1) ;//Cond 3, got strange wait
 		fsm.registerTransition(L,G, 2) ;//Cond 3, got strange wait
 		fsm.registerDefaultTransition(L,L) ;//wait to success block
+		
+		fsm.registerDefaultTransition(M,M) ;//wait to success block
+		fsm.registerTransition(M,H, 10) ;//Cond 3, got strange wait
+		fsm.registerTransition(M,A, 2) ;//Cond 3, got strange wait
+		fsm.registerTransition(A,M, 6) ;//Cond 3, got strange wait
+		fsm.registerTransition(E,M, 5) ;//Cond 3, got strange wait
+		fsm.registerTransition(E,H, 6) ;//Cond 3, got strange wait
 		
 		fsm.registerTransition(E,Z, 1) ;//Cond 1, End Chase
 		

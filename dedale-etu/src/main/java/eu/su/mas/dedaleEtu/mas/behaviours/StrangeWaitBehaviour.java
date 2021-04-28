@@ -1,5 +1,8 @@
 package eu.su.mas.dedaleEtu.mas.behaviours;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.agents.dummies.explo.fsmAgent;
 import jade.core.AID;
@@ -19,20 +22,35 @@ public class StrangeWaitBehaviour extends OneShotBehaviour {
 
 	private int exitValue;
 
+	private String myPosition;
+
 	public StrangeWaitBehaviour(Agent a) {
 		super(a);
 	}
 	@Override
 	public void action() {
+		myPosition = ((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
+		
 		final MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("ProtocolePoke"), 
 				MessageTemplate.MatchPerformative(ACLMessage.INFORM) );	
 		final ACLMessage msg = this.myAgent.receive(msgTemplate);
 		
+		if(((fsmAgent)this.myAgent).nextNode == null) {
+			exitValue = 1;
+			return ;
+		}
 		SuccessMove = ((AbstractDedaleAgent)this.myAgent).moveTo(((fsmAgent)this.myAgent).nextNode);
+
 		
 		if(SuccessMove) {
 			System.out.println(this.myAgent.getLocalName() + " --> The Wumpus is not blocked ! (StrangeWaitBehaviour)");
 			exitValue = 1;
+			((fsmAgent)this.myAgent).nextNode = null;
+			try {
+				this.myAgent.doWait(((fsmAgent)this.myAgent).AgentSpeed);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 			return ;
 		}else {
 			System.out.println(this.myAgent.getLocalName() + " --> The potential Wumpus still probably blocked ! (StrangeWaitBehaviour) "+((fsmAgent)this.myAgent).nextNode);
@@ -53,15 +71,34 @@ public class StrangeWaitBehaviour extends OneShotBehaviour {
 			//Mandatory to use this method (it takes into account the environment to decide if someone is reachable or not)
 			((AbstractDedaleAgent)this.myAgent).sendMessage(sendMsg);
 		}else {
-			ACLMessage sendMsg=new ACLMessage(ACLMessage.INFORM);
-			sendMsg.setProtocol("ProtocoleByPass");
-			sendMsg.setSender(this.myAgent.getAID());
-			sendMsg.setContent(((AbstractDedaleAgent)this.myAgent).getCurrentPosition());
+			final MessageTemplate msgSpam = MessageTemplate.and(MessageTemplate.MatchProtocol("ProtocoleByPass"), 
+					MessageTemplate.MatchPerformative(ACLMessage.INFORM) );	
+			final ACLMessage msgS = this.myAgent.receive(msgSpam);
+			while(true) {
+				if(msgS == null) {
 
-			for(String n: ((fsmAgent)this.myAgent).getList_AgentNames())
-			sendMsg.addReceiver(new AID(n,AID.ISLOCALNAME));
+					ACLMessage sendMsg=new ACLMessage(ACLMessage.INFORM);
+					sendMsg.setProtocol("ProtocoleByPass");
+					sendMsg.setSender(this.myAgent.getAID());
+					sendMsg.setContent(((AbstractDedaleAgent)this.myAgent).getCurrentPosition());
+
+					for(String n: ((fsmAgent)this.myAgent).getList_AgentNames()) {
+						sendMsg.addReceiver(new AID(n,AID.ISLOCALNAME));
+						
+					}
+					
+					((AbstractDedaleAgent)this.myAgent).sendMessage(sendMsg);
+					break;
+				}else {
+					if(myPosition.equals(msgS.getContent())) {
+						System.out.println(this.myAgent.getLocalName() + " --> It's not a Wumpus back to explo");
+						exitValue = 1;
+						return ;
+					}
+				}
+			}
 			
-			((AbstractDedaleAgent)this.myAgent).sendMessage(sendMsg);
+
 		}
 		
 		

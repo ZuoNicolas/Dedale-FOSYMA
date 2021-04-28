@@ -1,6 +1,7 @@
 package eu.su.mas.dedaleEtu.mas.behaviours;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -56,13 +57,13 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 	
 	private String nodeGoal = "";
 	
-	private int timer, start, now, nb_move_fail, max_move_fail=20, timer_spam = 1000;
+	private int timer, start, now, nb_move_fail, max_move_fail=((fsmAgent)this.myAgent).AgentSensitivity, timer_spam = 1000;
 	
-	private String oldNode="";
+	private String oldNode="", receiveAgentName;
 	
-	private boolean SuccessMove;
+	private boolean SuccessMove, modeLeavePath=false;
 	
-	private List<String> temp;
+	private List<String> temp, leavePath;
 	
 	private List<Couple<String,Integer>> list_spam = new ArrayList<>();
 /**
@@ -82,16 +83,82 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 	public void action() {
 		this.exitValue = 0;
 		//list_spam.add(new Couple<>("teste", Integer.valueOf(5)));
+		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
+
+		if(modeLeavePath) {
+			if(!leavePath.contains(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())) {
+				try {
+					this.myAgent.doWait(((fsmAgent)this.myAgent).AgentSpeed * 3);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+
+	
+				List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this.myAgent).observe();//myPosition
+	
+				//1) remove the current node from openlist and add it to closedNodes.
+				this.myMap.addNode(myPosition, MapAttribute.closed);
+	
+				//2) get the surrounding nodes and, if not in closedNodes, add them to open nodes.
+				String nextNode=null;
+				Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
+				while(iter.hasNext()){
+					Couple<String, List<Couple<Observation, Integer>>> node = iter.next();
+					String nodeId= node.getLeft();
+	
+					if (myPosition!=nodeId) {
+						this.myMap.addEdge(myPosition, nodeId);
+						if (nextNode==null && leavePath.contains(nodeId)) nextNode=nodeId;
+					}
+				}
+				modeLeavePath = false;
+				leavePath= null;
+				if (nextNode == null) {
+					System.out.println(this.myAgent.getLocalName()+" ---> Sorry I'm not smart enough to find a knot to let you through");
+					sendSorryMsg();
+					modeLeavePath = false;
+					leavePath= null;
+					try {
+						this.myAgent.doWait(((fsmAgent)this.myAgent).AgentSpeed * 3);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+					return ; 
+				}else{
+					
+					((fsmAgent)this.myAgent).nextNode=nextNode;
+					((fsmAgent)this.myAgent).updateMap(this.myMap);
+					SuccessMove = ((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);	
+					
+					if(SuccessMove) {
+						System.out.println(this.myAgent.getLocalName()+" ---> I find a node to back ! Good luck to your important mision ");
+					}else {
+						System.out.println(this.myAgent.getLocalName()+" ---> Sorry I find a node to back, but somethink block me ");
+						sendSorryMsg();
+						modeLeavePath = false;
+						leavePath= null;
+					}
+				}
+				return ;
+			}
+			
+		}
+		
+		if (((fsmAgent)this.myAgent).moveTo != null) {
+			this.exitValue = 6;
+		}
+		
 		if(((fsmAgent)this.myAgent).endExplo) {
 			this.exitValue = 4;//End of exploration
 			((fsmAgent)this.myAgent).forceChangeNode=true;
 			return ;
 		}
-		if(checkMsg() || checkTimer()) {
-			return ;
+		if(((fsmAgent)this.myAgent).nextNode != null) {
+			if(checkMsg() || checkTimer()) {
+				clearMail();
+				return ;
+			}
 		}
-		
-		
 		
 		this.myMap = ((fsmAgent)this.myAgent).getMap();
 		
@@ -99,7 +166,7 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 		if(((fsmAgent)this.myAgent).move && this.myMap!=null) {
 
 			//0) Retrieve the current position
-			String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
+			myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 	
 			if (myPosition!=null){
 				//List of observable from the agent's current position
@@ -109,7 +176,7 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 				 * Just added here to let you see what the agent is doing, otherwise he will be too quick
 				 */
 				try {
-					this.myAgent.doWait(500);
+					this.myAgent.doWait(((fsmAgent)this.myAgent).AgentSpeed);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -149,7 +216,7 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 					//4.1 If there exist one open node directly reachable, go for it,
 					//	 otherwise choose one from the openNode list, compute the shortestPath and go for it
 					
-					if (nextNode==null || ((fsmAgent)this.myAgent).forceChangeNode){
+					if (((fsmAgent)this.myAgent).succesMerge || nextNode==null || ((fsmAgent)this.myAgent).forceChangeNode){
 						if (((fsmAgent)this.myAgent).succesMerge || ((fsmAgent)this.myAgent).forceChangeNode) {
 							if (nodeGoal.equals("") || oldNode.equals(myPosition) || ((fsmAgent)this.myAgent).forceChangeNode) {
 								List<String> opennodes=this.myMap.getOpenNodes();
@@ -158,11 +225,14 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 							}
 							temp = this.myMap.getShortestPath(myPosition, nodeGoal, ((fsmAgent)this.myAgent).blockedAgent);
 
-							if (temp != null || temp.size()>0) {
+							if (temp != null ) {
+								if (temp.size()>0) {
+									nextNode = temp.get(0);
+								}
 								
-								nextNode = temp.get(0);
 							}else {
 								nodeGoal = "";
+								((fsmAgent)this.myAgent).blockedAgent.clear();
 								System.out.println(this.myAgent.getLocalName()+" ---> null Path, reset");
 								return ;
 							}
@@ -174,44 +244,20 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 							}
 						}
 						else {
-						//no directly accessible openNode
-						//chose one, compute the path and take the first step.
-						temp = this.myMap.getShortestPathToClosestOpenNode(myPosition, ((fsmAgent)this.myAgent).blockedAgent);
-						if (temp != null) {
-							nextNode = temp.get(0);
-						}else {
-							System.out.println(this.myAgent.getLocalName()+" ---> null Path, reset");
-							return ;
-						}
-						nextNode=temp.get(0);//getShortestPath(myPosition,this.openNodes.get(0)).get(0);
+							temp = this.myMap.getShortestPathToClosestOpenNode(myPosition, ((fsmAgent)this.myAgent).blockedAgent);
+							if (temp != null) {
+								nextNode = temp.get(0);
+							}else {
+								((fsmAgent)this.myAgent).blockedAgent.clear();
+								System.out.println(this.myAgent.getLocalName()+" ---> null Path, reset");
+								return ;
+							}
+							nextNode=temp.get(0);//getShortestPath(myPosition,this.openNodes.get(0)).get(0);
 						}
 						//System.out.println(this.myAgent.getLocalName()+"-- list= "+this.myMap.getOpenNodes()+"| nextNode: "+nextNode+ " actual node :"+myPosition);
 					}else {
 						//System.out.println("nextNode notNUll - "+this.myAgent.getLocalName()+"-- list= "+this.myMap.getOpenNodes()+"\n -- nextNode: "+nextNode + " actual node :"+myPosition);
 					}
-					//4) At each time step, the agent blindly send all its graph to its surrounding to illustrate how to share its knowledge (the topology currently) with the the others agents. 	
-					// If it was written properly, this sharing action should be in a dedicated behaviour set, the receivers be automatically computed, and only a subgraph would be shared.
-					/*
-					if (((ExploreCoopAgent)this.myAgent).changeNode) {
-						((ExploreCoopAgent)this.myAgent).changeNode = false;
-						nextNode = ((ExploreCoopAgent)this.myAgent).nextNode = nextNode;
-					}
-					*/
-	//				ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-	//				msg.setProtocol("SHARE-TOPO");
-	//				msg.setSender(this.myAgent.getAID());
-	//				if (this.myAgent.getLocalName().equals("1stAgent")) {
-	//					msg.addReceiver(new AID("2ndAgent",false));
-	//				}else {
-	//					msg.addReceiver(new AID("1stAgent",false));
-	//				}
-	//				SerializableSimpleGraph<String, MapAttribute> sg=this.myMap.getSerializableGraph();
-	//				try {					
-	//					msg.setContentObject(sg);
-	//				} catch (IOException e) {
-	//					e.printStackTrace();
-	//				}
-	//				((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
 
 					((fsmAgent)this.myAgent).nextNode=nextNode;
 					((fsmAgent)this.myAgent).updateMap(this.myMap);
@@ -237,6 +283,31 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 	}
 	
 	public boolean checkMsg() {
+		
+		while(true) {
+			MessageTemplate msgTemplatelp=MessageTemplate.and(
+					MessageTemplate.MatchProtocol("ProtocoleLeavePath"),
+					MessageTemplate.MatchPerformative(ACLMessage.INFORM));
+		
+			ACLMessage msglp=this.myAgent.receive(msgTemplatelp);
+			
+			if(msglp!=null) {
+				try {
+					leavePath = (List<String>) msglp.getContentObject();
+				} catch (UnreadableException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				receiveAgentName = msglp.getSender().getLocalName();
+				modeLeavePath  = true;
+			}
+			else {
+				break;
+			}
+		}
+		if (modeLeavePath) {
+			return true;
+		}
 		
 		MessageTemplate msgTemplateMap=MessageTemplate.and(
 				MessageTemplate.MatchProtocol("ProtocoleShareMap"),
@@ -286,31 +357,73 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 			} catch (UnreadableException e) {
 				e.printStackTrace();			
 			}
-			boolean error2 = NodeToBlock.remove(msgBlock.getContent());
-			
-			if ( !error2 ) {
-				System.out.println(this.myAgent.getLocalName() + " --> Receive a help blocK Wumpus protocole, but it's wrong I'm not a Wumpus");
-				((fsmAgent)this.myAgent).blockedAgent.add(msgBlock.getContent());
-	        	return false;
-    	    }
+			for (String n : NodeToBlock) {
+				System.out.println(this.myAgent.getLocalName() + " -9-> "+n);
 
+			}
 			((fsmAgent)this.myAgent).NodeToBlock = NodeToBlock;
-			
-			((fsmAgent)this.myAgent).blockedAgent.add(((fsmAgent)this.myAgent).NodeToBlock.get(0));
+			String AgentPos = ((fsmAgent)this.myAgent).NodeToBlock.get(0);
+			((fsmAgent)this.myAgent).blockedAgent.add(AgentPos);
 			((fsmAgent)this.myAgent).NodeToBlock.remove(0);
+			
+			String AgentNextPos = ((fsmAgent)this.myAgent).NodeToBlock.get(0);
+			((fsmAgent)this.myAgent).NodeToBlock.remove(0);
+			
 			if(((fsmAgent)this.myAgent).NodeToBlock.contains(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())) {
+				System.out.println(this.myAgent.getLocalName() + " --> I'm already on the Node to block ("+((AbstractDedaleAgent)this.myAgent).getCurrentPosition()+")");
+				((fsmAgent)this.myAgent).nextNode = AgentNextPos;
 				((fsmAgent)this.myAgent).NodeToBlock.remove(((AbstractDedaleAgent)this.myAgent).getCurrentPosition());
-				this.exitValue = 5;
+				
+				exitValue = 5;
 				return true;
 			}
-			((fsmAgent)this.myAgent).moveTo = ((fsmAgent)this.myAgent).NodeToBlock.get(0);
-			((fsmAgent)this.myAgent).NodeToBlock.remove(0);
-			System.out.println(this.myAgent.getLocalName() + " --> Receive a help blocK Wumpus protocole, go to help block");
+			//If the Sender want to come to my position
+			if(AgentNextPos.equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())) {
+				ACLMessage sendMsg=new ACLMessage(ACLMessage.INFORM);
+				sendMsg.setProtocol("ProtocoleByPass");
+				sendMsg.setSender(this.myAgent.getAID());
+				sendMsg.setContent(((AbstractDedaleAgent)this.myAgent).getCurrentPosition());
+		
+				sendMsg.addReceiver(new AID(msgBlock.getSender().getLocalName(),AID.ISLOCALNAME));
+
+				((AbstractDedaleAgent)this.myAgent).sendMessage(sendMsg);
+				
+				System.out.println(this.myAgent.getLocalName() + " --> I'm not a Wumpus "+AgentNextPos+" ! (ExploCoopBehaviour)");
+				return false;
+			}
+			/*
+			if(!AgentNextPos.equals(((fsmAgent)this.myAgent).nextNode)) {
+				System.out.println(this.myAgent.getLocalName() + " --> Ignore it's didn't concern me at "+AgentNextPos+" (ExploCoopBehaviour)");
+				return false;
+			}*/
+			System.out.println(this.myAgent.getLocalName() + " --> NodeToBlock "+((fsmAgent)this.myAgent).NodeToBlock+" (ExploCoopBehaviour)");
+			if(((fsmAgent)this.myAgent).NodeToBlock.size()>0) {
+				((fsmAgent)this.myAgent).moveTo = ((fsmAgent)this.myAgent).NodeToBlock.get(0);
+				((fsmAgent)this.myAgent).NodeToBlock.remove(0);
+				((fsmAgent)this.myAgent).blockedAgent.add(AgentNextPos);
+				System.out.println(this.myAgent.getLocalName() + " --> Go to MoveToBehaviour "+((fsmAgent)this.myAgent).moveTo);
+				exitValue = 6;
+				return true;
+			}
+			return false;
 			
-			this.exitValue = 4;//Go to help block
-			return true;
     	}
 		return false;
+	}
+	
+	public void sendSorryMsg() {
+		if (receiveAgentName != null) {
+			ACLMessage sendMsg=new ACLMessage(ACLMessage.INFORM);
+			sendMsg.setProtocol("ProtocoleSorry");
+			sendMsg.setSender(this.myAgent.getAID());
+
+			sendMsg.setContent(((AbstractDedaleAgent)this.myAgent).getCurrentPosition());
+
+			sendMsg.addReceiver(new AID(receiveAgentName,AID.ISLOCALNAME));
+
+			//Mandatory to use this method (it takes into account the environment to decide if someone is reachable or not)
+			((AbstractDedaleAgent)this.myAgent).sendMessage(sendMsg);
+		}
 	}
 	
 	public boolean checkTimer() {
@@ -353,6 +466,17 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 			}
 		}
 		return false;
+	}
+	
+	public void clearMail() {
+		while(true) {
+			MessageTemplate msgTemplate= MessageTemplate.MatchPerformative(ACLMessage.INFORM);
+			ACLMessage msg=this.myAgent.receive(msgTemplate);
+			
+			if(msg == null) {
+				break;
+			}
+		}
 	}
 	@Override
 	public int onEnd() {

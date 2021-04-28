@@ -1,8 +1,11 @@
 package eu.su.mas.dedaleEtu.mas.behaviours;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
+import dataStructures.tuple.Couple;
+import eu.su.mas.dedale.env.Observation;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.agents.dummies.explo.fsmAgent;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
@@ -23,6 +26,10 @@ public class SuccessBlockBehaviour extends OneShotBehaviour {
 	private int exitValue;
 	
 	private List<String> SendedAgent = new ArrayList<String>(), ShareMapAgent = new ArrayList<String>();
+
+	private String myPosition;
+
+	private MapRepresentation myMap;
 	
 	public SuccessBlockBehaviour(Agent a) {
 		super(a);
@@ -30,8 +37,30 @@ public class SuccessBlockBehaviour extends OneShotBehaviour {
 
 	@Override
 	public void action() {
+		myPosition = ((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
+		myMap = ((fsmAgent)this.myAgent).getMap();
 		exitValue = 0;
+		String nextNode=null;
+		List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this.myAgent).observe();//myPosition
 
+		Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
+		while(iter.hasNext()){
+			Couple<String, List<Couple<Observation, Integer>>> node = iter.next();
+			String nodeId= node.getLeft();
+			List<Couple<Observation, Integer>> list = node.getRight();
+
+			if (myPosition!=nodeId) {
+				this.myMap.addEdge(myPosition, nodeId);
+				if (nextNode==null && nodeId.equals(((fsmAgent)this.myAgent).nextNode)) nextNode=nodeId;
+			}
+		}
+		((fsmAgent)this.myAgent).nextNode = nextNode;
+		
+        if (((fsmAgent)this.myAgent).nextNode == null) {
+        	exitValue = 2;
+        	return ;
+        }
+        
 		boolean SuccessMove = ((AbstractDedaleAgent)this.myAgent).moveTo(((fsmAgent)this.myAgent).nextNode);
 		
 		if(SuccessMove) {
@@ -40,6 +69,11 @@ public class SuccessBlockBehaviour extends OneShotBehaviour {
 			ShareMapAgent = new ArrayList<String>();
 			exitValue = 2;
 			((fsmAgent)this.myAgent).successBlock = false;
+			try {
+				this.myAgent.doWait(((fsmAgent)this.myAgent).AgentSpeed);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 			return ;
 		}
 		
@@ -77,6 +111,7 @@ public class SuccessBlockBehaviour extends OneShotBehaviour {
 				}
 			}
 		}else {
+
 			if(!SendedAgent.contains(msgSpam.getSender().getLocalName())) {
 				System.out.println(this.myAgent.getLocalName() + " --> "+msgSpam.getContent()+" "+((fsmAgent)this.myAgent).nextNode);
 				if(msgSpam.getContent().equals(((fsmAgent)this.myAgent).nextNode)) {
