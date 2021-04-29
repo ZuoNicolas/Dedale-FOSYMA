@@ -1,1 +1,1 @@
-Read Rapport.pdf
+Read Rapport.pdf (only french version)
