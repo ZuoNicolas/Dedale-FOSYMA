@@ -135,7 +135,6 @@ public class fsmAgent extends AbstractDedaleAgent {
 		
 		fsm.registerTransition(H,G, 1) ;//Cond 1, got strange wait
 		fsm.registerTransition(H,A, 2) ;//Cond 1, back to Explo
-		fsm.registerTransition(H,E, 3) ;//Cond 1, back to Explo
 		fsm.registerTransition(I,A, 1) ;//Cond 1, back to Explo
 		
 		fsm.registerTransition(G,C, 1) ;//Cond 1, got strange wait
@@ -147,13 +146,14 @@ public class fsmAgent extends AbstractDedaleAgent {
 		
 		//CHECK SOMETHING
 		fsm.registerTransition(E,F, 2) ;//Cond 3, got strange wait
+		//fsm.registerTransition(E,K, 3) ;//Cond 3, got strange wait
+		//fsm.registerTransition(E,J, 7) ;//Cond 3, got strange wait
 		fsm.registerDefaultTransition(J,E) ;//wait to success block
-		fsm.registerTransition(E,F, 3) ;//Cond 3, got strange wait
 		fsm.registerTransition(E,C, 4) ;//Cond 3, got strange wait
 		fsm.registerDefaultTransition(K,J) ;//wait to success block
 		fsm.registerTransition(J,L, 1) ;//Cond 3, got strange wait
 		fsm.registerTransition(L,E, 1) ;//Cond 3, got strange wait
-		fsm.registerTransition(L,G, 2) ;//Cond 3, got strange wait
+		fsm.registerTransition(L,F, 2) ;//Cond 3, got strange wait
 		fsm.registerDefaultTransition(L,L) ;//wait to success block
 		
 		fsm.registerDefaultTransition(M,M) ;//wait to success block

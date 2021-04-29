@@ -231,7 +231,7 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 			if ( nb_move_fail >= max_move_fail) {
 				nb_move_fail = 0;
 				System.out.println(this.myAgent.getLocalName() + " --> Something block me ! (stop move)");
-				this.exitValue = 3;
+				this.exitValue = 2;
 				return ;
 			}
 			nb_move_fail++;
@@ -293,10 +293,7 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 			} catch (UnreadableException e) {
 				e.printStackTrace();			
 			}
-			for (String n : NodeToBlock) {
-				System.out.println(this.myAgent.getLocalName() + " -9-> "+n);
 
-			}
 			((fsmAgent)this.myAgent).NodeToBlock = NodeToBlock;
 			String AgentPos = ((fsmAgent)this.myAgent).NodeToBlock.get(0);
 			((fsmAgent)this.myAgent).blockedAgent.add(AgentPos);

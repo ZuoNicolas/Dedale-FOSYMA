@@ -357,10 +357,6 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 			} catch (UnreadableException e) {
 				e.printStackTrace();			
 			}
-			for (String n : NodeToBlock) {
-				System.out.println(this.myAgent.getLocalName() + " -9-> "+n);
-
-			}
 			((fsmAgent)this.myAgent).NodeToBlock = NodeToBlock;
 			String AgentPos = ((fsmAgent)this.myAgent).NodeToBlock.get(0);
 			((fsmAgent)this.myAgent).blockedAgent.add(AgentPos);

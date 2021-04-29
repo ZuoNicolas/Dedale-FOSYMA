@@ -113,7 +113,6 @@ public class SuccessBlockBehaviour extends OneShotBehaviour {
 		}else {
 
 			if(!SendedAgent.contains(msgSpam.getSender().getLocalName())) {
-				System.out.println(this.myAgent.getLocalName() + " --> "+msgSpam.getContent()+" "+((fsmAgent)this.myAgent).nextNode);
 				if(msgSpam.getContent().equals(((fsmAgent)this.myAgent).nextNode)) {
 					System.out.println(this.myAgent.getLocalName() + " --> Sorry I thought you were a Wumpus "+msgSpam.getSender().getLocalName());
 					SendedAgent = new ArrayList<String>();

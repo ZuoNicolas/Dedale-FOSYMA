@@ -282,21 +282,21 @@ public class NeedHelpBehaviour extends OneShotBehaviour {
 		List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this.myAgent).observe();//myPosition
 
 		Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
-		System.out.println(this.myAgent.getLocalName() + " --> Check next node "+((fsmAgent)this.myAgent).nextNode+" : ");
+		//System.out.println(this.myAgent.getLocalName() + " --> Check next node "+((fsmAgent)this.myAgent).nextNode+" : ");
 		while(iter.hasNext()){
 			Couple<String, List<Couple<Observation, Integer>>> node = iter.next();
 			String nodeId= node.getLeft();
-			System.out.print(nodeId+" ");
+			//System.out.print(nodeId+" ");
 			if (myPosition!=nodeId) {
 				if (nextNode==null && nodeId.equals(((fsmAgent)this.myAgent).nextNode)) {
 					nextNode=nodeId;
 				}
 			}
 		}
-		System.out.println();
+		//System.out.println();
 
 		((fsmAgent)this.myAgent).nextNode = nextNode;
-		System.out.println(this.myAgent.getLocalName() + " --> End Check next node "+((fsmAgent)this.myAgent).nextNode+" : ");
+		//System.out.println(this.myAgent.getLocalName() + " --> End Check next node "+((fsmAgent)this.myAgent).nextNode+" : ");
 
         if (((fsmAgent)this.myAgent).nextNode == null) {
 			System.out.println(this.myAgent.getLocalName() + " --> nextNode null, back to explo ! (NeedHelpBehaviour)");
