@@ -64,8 +64,9 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 	@Override
 	public void action() {
 		this.exitValue = 0;
-		
+		//If Someone have a special Mision, I will try to not block him
 		if(modeLeavePath) {
+			//If I'm not on the path i will juste stop a few time
 			if(!leavePath.contains(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())) {
 				try {
 					this.myAgent.doWait(((fsmAgent)this.myAgent).AgentSpeed * 3);
@@ -95,9 +96,10 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 					if (nextNode==null && leavePath.contains(nodeId)) nextNode=nodeId;
 				}
 			}
+			//If no nextNode finded i will just says to him
 			if (nextNode == null) {
 				System.out.println(this.myAgent.getLocalName()+" ---> Sorry I'm not smart enough to find a knot to let you through");
-				sendSorryMsg();
+				sendSorryMsg(); // Send of the Sorry msg
 				modeLeavePath = false;
 				leavePath= null;
 				try {
@@ -123,7 +125,7 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 			}
 			return ;
 		}
-		
+		//If I receive a special mission to MoveTo, go to MoveTo protocole
 		if (((fsmAgent)this.myAgent).moveTo != null) {
 			this.exitValue = 5;
 		}
@@ -132,7 +134,7 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 			firstTime=false;
 			System.out.println(this.myAgent.getLocalName()+" Start Chase !");
 		}
-		
+		//Check every msg
 		if(checkMsg()) {
 			clearMail();
 			return ;
@@ -164,34 +166,22 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 			//1) remove the current node from openlist and add it to closedNodes.
 			this.myMap.addNode(myPosition, MapAttribute.closed);
 			
-			//2) get the surrounding nodes and, if not in closedNodes, add them to open nodes.
+			//2) get the surrounding nodes and, if we a Wumpus noise 
 			String nextNode=null;
 			Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
 			while(iter.hasNext()){
 				Couple<String, List<Couple<Observation, Integer>>> node = iter.next();
 				String nodeId= node.getLeft();
 				List<Couple<Observation, Integer>> list = node.getRight();
-				//the node may exist, but not necessarily the edge
 				if (myPosition!=nodeId && nodeId!=oldNode && list.size()>0 ) {
 					if (nextNode==null && !((fsmAgent)this.myAgent).GolemPoop.contains(nextNode)) nextNode=nodeId;
 				}
 			}
-
-			//4) select next move.
-			//4.1 If there exist one open node directly reachable, go for it,
-			//	 otherwise choose one from the openNode list, compute the shortestPath and go for it
-			if (((fsmAgent)this.myAgent).moveTo != null) {
-				List<String> chemin = myMap.getShortestPath(myPosition, ((fsmAgent)this.myAgent).moveTo, ((fsmAgent)this.myAgent).blockedAgent);
-				/*for(String c: chemin) {
-					System.out.println(this.myAgent.getLocalName()+" ---> Move "+c);
-				}*/
-				if(chemin != null) {
-					if(chemin.size()>0) {
-						nextNode = chemin.get(0);
-					}
-				}	
-			}
+			//If I m back from ImNotWumpus exitValue = 1, I have a very high chance to block someone, so I change my nodeGoal
 			int lastExit = ((fsmAgent)this.myAgent).getFSM().getLastExitValue();
+			if (lastExit == 1) {
+				nodeGoal = "";
+			}
 
 			if (nextNode==null || lastExit == 1 || ((fsmAgent)this.myAgent).forceChangeNode){
 				((fsmAgent)this.myAgent).forceChangeNode = false;
@@ -219,7 +209,7 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 				}
 
 			}else {
-				//System.out.println(this.myAgent.getLocalName()+" ---> Find a Golem's poop");
+				System.out.println(this.myAgent.getLocalName()+" ---> Find a Golem's poop");
 			}
 
 			((fsmAgent)this.myAgent).nextNode=nextNode;
@@ -229,6 +219,7 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 		
 		
 		if (!SuccessMove) {
+			//mas_move_fail = the Agent sensibility
 			if ( nb_move_fail >= max_move_fail) {
 				nb_move_fail = 0;
 				System.out.println(this.myAgent.getLocalName() + " --> Something block me ! (stop move)");
@@ -244,7 +235,7 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 		
 	}
 	
-		
+	//check msg	
 	public boolean checkMsg() {
 		
 		while(true) {
@@ -282,7 +273,7 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 			this.exitValue = 4;//Go to share map
 			return false;
 		}
-		
+
 		final MessageTemplate msgTemplateBlock = MessageTemplate.and(MessageTemplate.MatchProtocol("ProtocoleHelpBlockWumpus"),
 				MessageTemplate.MatchPerformative(ACLMessage.INFORM));	
     	final ACLMessage msgBlock = this.myAgent.receive(msgTemplateBlock);
@@ -303,6 +294,7 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 			String AgentNextPos = ((fsmAgent)this.myAgent).NodeToBlock.get(0);
 			((fsmAgent)this.myAgent).NodeToBlock.remove(0);
 			
+			//If I'm already on a NodeToBlock
 			if(((fsmAgent)this.myAgent).NodeToBlock.contains(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())) {
 				System.out.println(this.myAgent.getLocalName() + " --> I'm already on the Node to block ("+((AbstractDedaleAgent)this.myAgent).getCurrentPosition()+")");
 				((fsmAgent)this.myAgent).nextNode = AgentNextPos;
@@ -330,6 +322,7 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 				System.out.println(this.myAgent.getLocalName() + " --> Ignore it's didn't concern me at "+AgentNextPos+" (ExploCoopBehaviour)");
 				return false;
 			}*/
+			//Go to the NodeToBlock on MoveTo
 			System.out.println(this.myAgent.getLocalName() + " --> NodeToBlock "+((fsmAgent)this.myAgent).NodeToBlock+" (ExploCoopBehaviour)");
 			if(((fsmAgent)this.myAgent).NodeToBlock.size()>0) {
 				((fsmAgent)this.myAgent).moveTo = ((fsmAgent)this.myAgent).NodeToBlock.get(0);
@@ -349,6 +342,7 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
     	
     	if (msgS != null) {
     		String m =msgS.getContent();
+    		//If his nextNode is my current pos
     		if ( m.equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())) {
         		System.out.println(this.myAgent.getLocalName() + " --> Receive a check Someone msg");
         		((fsmAgent)this.myAgent).agentToContact = msgS.getSender().getLocalName();
@@ -360,7 +354,7 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
     	final MessageTemplate msgBy = MessageTemplate.and(MessageTemplate.MatchProtocol("ProtocoleByPass"),
 				MessageTemplate.MatchPerformative(ACLMessage.INFORM));	
     	final ACLMessage msgB = this.myAgent.receive(msgBy);
-    	
+    	//Receive a msg whit the position of the agent where he is blocked
     	if (msgB != null) {
     		String m =msgB.getContent();
     		if ( m.equals(((fsmAgent)this.myAgent).nextNode)) {

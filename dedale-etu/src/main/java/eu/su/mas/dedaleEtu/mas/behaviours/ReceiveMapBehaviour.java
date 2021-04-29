@@ -71,6 +71,7 @@ public class ReceiveMapBehaviour extends OneShotBehaviour{
 			if (myAgent.compareTo(otherAgent) > 0){
 				((fsmAgent)this.myAgent).succesMerge = true;
 			}
+			//If the current agent is on successBlockBehaviour, back to this Behaviour
 			if( ((fsmAgent)this.myAgent).successBlock) {
 				this.exitValue = 2;
 			}else {
@@ -79,6 +80,7 @@ public class ReceiveMapBehaviour extends OneShotBehaviour{
 			System.out.println(this.myAgent.getLocalName()+" <--- End Map merge");
 			
 		}else{
+			//If is the second time this Behaviour is actived
 			if ( !haveMsg ) {
 				haveMsg=true;
 				if( ((fsmAgent)this.myAgent).successBlock) {

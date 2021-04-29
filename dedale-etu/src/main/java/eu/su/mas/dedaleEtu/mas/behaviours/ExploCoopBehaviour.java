@@ -85,7 +85,9 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 		//list_spam.add(new Couple<>("teste", Integer.valueOf(5)));
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 
+		//If Someone have a special Mision, I will try to not block him
 		if(modeLeavePath) {
+			//If I'm not on the path i will juste stop a few time
 			if(!leavePath.contains(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())) {
 				try {
 					this.myAgent.doWait(((fsmAgent)this.myAgent).AgentSpeed * 3);
@@ -99,7 +101,7 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 				//1) remove the current node from openlist and add it to closedNodes.
 				this.myMap.addNode(myPosition, MapAttribute.closed);
 	
-				//2) get the surrounding nodes and, if not in closedNodes, add them to open nodes.
+				//2) get the surrounding nodes and, if a surrounding node is not on the path i will go
 				String nextNode=null;
 				Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
 				while(iter.hasNext()){
@@ -108,14 +110,16 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 	
 					if (myPosition!=nodeId) {
 						this.myMap.addEdge(myPosition, nodeId);
-						if (nextNode==null && leavePath.contains(nodeId)) nextNode=nodeId;
+						if (nextNode==null && !leavePath.contains(nodeId)) nextNode=nodeId;
 					}
 				}
 				modeLeavePath = false;
 				leavePath= null;
+				
+				//If no nextNode finded i will just says to him
 				if (nextNode == null) {
 					System.out.println(this.myAgent.getLocalName()+" ---> Sorry I'm not smart enough to find a knot to let you through");
-					sendSorryMsg();
+					sendSorryMsg(); // Send of the Sorry msg
 					modeLeavePath = false;
 					leavePath= null;
 					try {
@@ -143,16 +147,17 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 			}
 			
 		}
-		
+		//If I receive a special mission to MoveTo, go to MoveTo protocole
 		if (((fsmAgent)this.myAgent).moveTo != null) {
 			this.exitValue = 6;
 		}
-		
+		//If the Exploration is finished go directly to chase
 		if(((fsmAgent)this.myAgent).endExplo) {
 			this.exitValue = 4;//End of exploration
 			((fsmAgent)this.myAgent).forceChangeNode=true;
 			return ;
 		}
+		//Check every msg et check timer
 		if(((fsmAgent)this.myAgent).nextNode != null) {
 			if(checkMsg() || checkTimer()) {
 				clearMail();
@@ -162,7 +167,7 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 		
 		this.myMap = ((fsmAgent)this.myAgent).getMap();
 		
-		//If no msg and agent can move
+
 		if(((fsmAgent)this.myAgent).move && this.myMap!=null) {
 
 			//0) Retrieve the current position
@@ -212,11 +217,9 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 					((fsmAgent)this.myAgent).endExplo=true;
 					System.out.println(this.myAgent.getLocalName()+" - Exploration successufully done");
 				}else{
-					//4) select next move.
-					//4.1 If there exist one open node directly reachable, go for it,
-					//	 otherwise choose one from the openNode list, compute the shortestPath and go for it
 					
 					if (((fsmAgent)this.myAgent).succesMerge || nextNode==null || ((fsmAgent)this.myAgent).forceChangeNode){
+						//If I need to take an another path, Init randomly
 						if (((fsmAgent)this.myAgent).succesMerge || ((fsmAgent)this.myAgent).forceChangeNode) {
 							if (nodeGoal.equals("") || oldNode.equals(myPosition) || ((fsmAgent)this.myAgent).forceChangeNode) {
 								List<String> opennodes=this.myMap.getOpenNodes();
@@ -266,6 +269,7 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 				
 				
 				if (!SuccessMove) {
+					//mas_move_fail = the Agent sensibility
 					if ( nb_move_fail >= max_move_fail) {
 						System.out.println(this.myAgent.getLocalName() + " --> I probably blocked a Wumpus ! (stop move)");
 						this.exitValue = 3;
@@ -281,9 +285,10 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 			}
 		}
 	}
-	
+	//Check every msg
 	public boolean checkMsg() {
 		
+		//Protocole leave the path receive
 		while(true) {
 			MessageTemplate msgTemplatelp=MessageTemplate.and(
 					MessageTemplate.MatchProtocol("ProtocoleLeavePath"),
@@ -309,6 +314,7 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 			return true;
 		}
 		
+		//protocole exchange Map
 		MessageTemplate msgTemplateMap=MessageTemplate.and(
 				MessageTemplate.MatchProtocol("ProtocoleShareMap"),
 				MessageTemplate.MatchPerformative(ACLMessage.INFORM));
@@ -324,6 +330,7 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 			return true;
 		}
 		
+		//protocole exchange Map
 		final MessageTemplate msgTemplate = MessageTemplate.and(MessageTemplate.MatchProtocol("ProtocolePoke"), 
 				MessageTemplate.MatchPerformative(ACLMessage.INFORM) );	
 		final ACLMessage msg = this.myAgent.receive(msgTemplate);
@@ -337,10 +344,11 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 			return true;
 		}
 		
+		
 		final MessageTemplate msgTPass = MessageTemplate.and(MessageTemplate.MatchProtocol("ProtocoleByPass"), 
 				MessageTemplate.MatchPerformative(ACLMessage.INFORM) );	
 		final ACLMessage msgPass = this.myAgent.receive(msgTPass);
-		
+		//Receive a msg whit the position of the agent where he is blocked
 		if(msgPass != null) {
 			((fsmAgent)this.myAgent).blockedAgent.add(msgPass.getContent());
 			return false;
@@ -422,6 +430,7 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 		}
 	}
 	
+	//check the timer and every PokeTime, go to SayHello
 	public boolean checkTimer() {
 		Iterator<Couple<String,  Integer>> iter=list_spam.iterator();
 		

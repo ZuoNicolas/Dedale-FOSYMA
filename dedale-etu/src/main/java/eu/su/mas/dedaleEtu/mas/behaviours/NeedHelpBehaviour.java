@@ -51,7 +51,7 @@ public class NeedHelpBehaviour extends OneShotBehaviour {
     	final MessageTemplate msgTemplateW = MessageTemplate.and(MessageTemplate.MatchProtocol("ProtocoleWumpusPos"),
 				MessageTemplate.MatchPerformative(ACLMessage.INFORM));	
     	final ACLMessage msgW = this.myAgent.receive(msgTemplateW);
-    	
+    	//Give the Wumpus Position
     	if(msgW != null) {
     		//check if is the same node to block
     		if ( NodeToBlock.contains(msgW.getContent())) {
@@ -60,7 +60,7 @@ public class NeedHelpBehaviour extends OneShotBehaviour {
     			sendMsg.setProtocol("ProtocoleGiveWumpusPos");
     			sendMsg.setSender(this.myAgent.getAID());
     			
-    			sendMsg.setContent(myPosition);
+    			sendMsg.setContent(((fsmAgent)this.myAgent).nextNode);
 
     			sendMsg.addReceiver(new AID(msgW.getSender().getLocalName(),AID.ISLOCALNAME));
 
@@ -71,7 +71,8 @@ public class NeedHelpBehaviour extends OneShotBehaviour {
     	}
 		
 		int lastExit = ((fsmAgent)this.myAgent).getFSM().getLastExitValue();
-		
+		// If i come from MoveTo, I need to know where the wumpus is
+		// Send a msg to know where the Wumpus is, and after back to NeedHelpBehaviour to update NodetoBlock
 		if (lastExit == 10) {
 			ACLMessage sendMsg=new ACLMessage(ACLMessage.INFORM);
 			sendMsg.setProtocol("ProtocoleWumpusPos");
@@ -108,7 +109,7 @@ public class NeedHelpBehaviour extends OneShotBehaviour {
     	final MessageTemplate msgTemplateEnd = MessageTemplate.and(MessageTemplate.MatchProtocol("ProtocoleNodeBlocked"),
 				MessageTemplate.MatchPerformative(ACLMessage.INFORM));	
     	final ACLMessage msgE = this.myAgent.receive(msgTemplateEnd);
-    	
+    	//Check if all node is blocked
     	if(msgE != null) {
     		//check if is the same node to block
     		if ( msgE.getContent().equals(((fsmAgent)this.myAgent).nextNode)) {
@@ -118,7 +119,7 @@ public class NeedHelpBehaviour extends OneShotBehaviour {
     		}
 
     	}
-		//End block
+		//All Node is blocked and send to other agent the mission is a success 
         if(NodeToBlock.size() == 0) {
         	System.out.println(this.myAgent.getLocalName()+ " ---> All NodeToBlock is blocked !");
 			ACLMessage sendMsg=new ACLMessage(ACLMessage.INFORM);
@@ -143,9 +144,9 @@ public class NeedHelpBehaviour extends OneShotBehaviour {
     		if(msgBlock != null) {
     			try {
 					News = (List<String>) msgBlock.getContentObject();
-					String error = News.get(0);
+					String error = News.get(0); //get Sender Position
 					News.remove(0);
-					String errorNextNode = News.get(0);
+					String errorNextNode = News.get(0); // getSender NextNode
 					News.remove(0);
 					//If my nextNode is a current Agent node 
 					if (error.equals(((fsmAgent) this.myAgent).nextNode)){
@@ -156,6 +157,7 @@ public class NeedHelpBehaviour extends OneShotBehaviour {
 							return ;
 						}
 		    			System.out.println(this.myAgent.getLocalName() + " --> Wrong ! It's not a golem at "+error);
+		    			//update all parameters and back to Explo
 						NodeToBlock = News;
 						((fsmAgent)this.myAgent).NodeToBlock = News;
 						((fsmAgent)this.myAgent).blockedAgent.add(error);
@@ -171,7 +173,7 @@ public class NeedHelpBehaviour extends OneShotBehaviour {
 		    			
 		    			News.remove(myPosition);
 		    			Iterator<String> itr = News.iterator(); 
-		    			
+		    			//update the block node with the sender block node
 		    			while (itr.hasNext()) {
 		    				String n = itr.next(); 
 		    				if (!NodeToBlock.contains(n)) { 
@@ -221,7 +223,7 @@ public class NeedHelpBehaviour extends OneShotBehaviour {
     		
 			
 			((fsmAgent)this.myAgent).NodeToBlock = NodeToBlock;
-    		//If receive a message, don't move
+    		//If receive a message send him especially the all node to block
     		if (msg != null || size ) {
     			System.out.println(this.myAgent.getLocalName() + " --> Receive msg from "+msg.getSender().getLocalName());
     			System.out.print(this.myAgent.getLocalName() + " --> Need to block ");
@@ -248,7 +250,7 @@ public class NeedHelpBehaviour extends OneShotBehaviour {
     			NodeToBlock.remove(0);
     			NodeToBlock.remove(0);
     		}else {
-
+    			//If no msg send every 5000ms a need help to block to every agent around
     			System.out.println(this.myAgent.getLocalName() + " --> Send a Help to block Wumpus msg");
     			System.out.print(this.myAgent.getLocalName() + " --> Need to block ");
     			for(String n: NodeToBlock) {
@@ -280,9 +282,8 @@ public class NeedHelpBehaviour extends OneShotBehaviour {
         
 		String nextNode=null;
 		List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this.myAgent).observe();//myPosition
-
 		Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
-		//System.out.println(this.myAgent.getLocalName() + " --> Check next node "+((fsmAgent)this.myAgent).nextNode+" : ");
+		//Check if the nextNode is around me, because sometime nextNode will change in comunication
 		while(iter.hasNext()){
 			Couple<String, List<Couple<Observation, Integer>>> node = iter.next();
 			String nodeId= node.getLeft();
@@ -293,11 +294,9 @@ public class NeedHelpBehaviour extends OneShotBehaviour {
 				}
 			}
 		}
-		//System.out.println();
-
 		((fsmAgent)this.myAgent).nextNode = nextNode;
-		//System.out.println(this.myAgent.getLocalName() + " --> End Check next node "+((fsmAgent)this.myAgent).nextNode+" : ");
 
+		//If loss nextNode back to explo
         if (((fsmAgent)this.myAgent).nextNode == null) {
 			System.out.println(this.myAgent.getLocalName() + " --> nextNode null, back to explo ! (NeedHelpBehaviour)");
 
@@ -306,6 +305,7 @@ public class NeedHelpBehaviour extends OneShotBehaviour {
         }
 		SuccessMove = ((AbstractDedaleAgent)this.myAgent).moveTo(((fsmAgent)this.myAgent).nextNode);
 		
+		//if I can move, back to explo
 		if(SuccessMove) {
 			System.out.println(this.myAgent.getLocalName() + " --> The Wumpus is not blocked ! (NeedHelpBehaviour)");
 			exitValue = 2;
@@ -317,7 +317,6 @@ public class NeedHelpBehaviour extends OneShotBehaviour {
 	    			break;
 	    		}
 			}
-    		
     		
 			((fsmAgent)this.myAgent).nextNode = null;
 			try {

@@ -113,57 +113,65 @@ public class fsmAgent extends AbstractDedaleAgent {
 		fsm.registerState(new WaitSomethingBehaviour(),L);
 		fsm.registerState(new MoveToBehaviour(),M);
 		fsm.registerLastState(new EndBehaviour(), Z);
+		
 		// Register the transitions
 		fsm.registerDefaultTransition(INIT,A);//Wait to receive map
+		// A -> ExploCoop
 		fsm.registerDefaultTransition(A,A);//Back to explo
-		fsm.registerTransition(A,B, 1) ;//Cond 1, poke every PokeTime
+		fsm.registerTransition(A,B, 1) ;//poke every PokeTime
+		fsm.registerTransition(A,C, 2) ;//Receive msg to ShareMap
+		fsm.registerTransition(A,F, 3) ;//Check Wumpus
+		fsm.registerTransition(A,E, 4) ;//End Explo, go to chase
+		fsm.registerTransition(A,H, 5) ;//Go to help block
+		fsm.registerTransition(A,M, 6) ;//Go to MoveTo, to block a node
+		// B -> SayHello
 		fsm.registerDefaultTransition(B,A);//Back to explo
-		fsm.registerTransition(A,C, 2) ;//Cond 2, 'A' receive msg
-		fsm.registerDefaultTransition(C,D);//Wait to receive map
-		fsm.registerDefaultTransition(D,D) ;//wait to receive a msg
+		// C -> ShareMap
+		fsm.registerDefaultTransition(C,D);//Go to wait to receive map
+		// D -> ReceiveMap
+		fsm.registerDefaultTransition(D,D) ;//wait to receive a msg, max 5000ms waiting
 		fsm.registerTransition(D,A, 1) ;//Back to explo
-		fsm.registerTransition(D,G, 2) ;//Cond 5, Go to help block
-		fsm.registerTransition(A,E, 4) ;//Cond 4, End Explo
-		fsm.registerTransition(A,F, 3) ;//Cond 3, Check Wumpus
-		fsm.registerTransition(A,H, 5) ;//Cond 5, Go to help block
-		fsm.registerDefaultTransition(F,A) ;//Back to Explo
+		fsm.registerTransition(D,G, 2) ;//Back to SuccessBlock
+		// E -> DumbChase
 		fsm.registerDefaultTransition(E,E) ;//Back to Chase
-		
-		fsm.registerTransition(F,G, 1) ;//Cond 1, go to succes block
-		fsm.registerTransition(F,H, 2) ;//Cond 2, go to need help block
-		fsm.registerTransition(F,I, 3) ;//Cond 3, got strange wait
-		
-		fsm.registerTransition(H,G, 1) ;//Cond 1, got strange wait
-		fsm.registerTransition(H,A, 2) ;//Cond 1, back to Explo
-		fsm.registerTransition(I,A, 1) ;//Cond 1, back to Explo
-		
-		fsm.registerTransition(G,C, 1) ;//Cond 1, got strange wait
-		fsm.registerTransition(G,A, 2) ;//Cond 1, got strange wait
-		
+		fsm.registerTransition(E,F, 2) ;//Go directly checkWumpusBlocked
+		fsm.registerTransition(E,K, 3) ;//Go to fast check if is Wumpus or not
+		fsm.registerTransition(E,C, 4) ;//Share Map to every agent one time
+		fsm.registerTransition(E,M, 5) ;//go to MoveTo, for help to block a note
+		fsm.registerTransition(E,H, 6) ;//Go directly to needHelp Behaviour
+		fsm.registerTransition(E,J, 7) ;//Go to confirm he is not a Wumpus
+		// F -> CheckWumpusBlocked
+		fsm.registerDefaultTransition(F,A) ;//Back to Explo		
+		fsm.registerTransition(F,G, 1) ;//go to succes block
+		fsm.registerTransition(F,H, 2) ;//go to need help block
+		fsm.registerTransition(F,I, 3) ;//go to strange wait
+		// G -> SuccessBlocked
 		fsm.registerDefaultTransition(G,G) ;//wait to success block
+		fsm.registerTransition(G,C, 1) ;//Error SuccessBlock, back to explo
+		fsm.registerTransition(G,A, 2) ;//ShareMap
+		// H -> NeedHelp
 		fsm.registerDefaultTransition(H,H) ;//wait to need help block
+		fsm.registerTransition(H,G, 1) ;//go to SuccessBlock
+		fsm.registerTransition(H,A, 2) ;//Error block, back to explo
+		// I -> StrangeWait
 		fsm.registerDefaultTransition(I,I) ;//wait to strange Wait
+		fsm.registerTransition(I,A, 1) ;//back to Explo
+		// J -> ImNotWumpus
+		fsm.registerDefaultTransition(J,E) ;//back to chase
+		fsm.registerTransition(J,L, 1) ;//go to wait Something
+		// K -> Something
+		fsm.registerDefaultTransition(K,J) ;//Go to ImNotWumpus
+		// L -> WaitSomethin
+		fsm.registerDefaultTransition(L,L) ;//wait Something, max wait 5000ms 
+		fsm.registerTransition(L,E, 1) ;//back to chase
+		fsm.registerTransition(L,F, 2) ;//go to ChekWumpusBlocked
+		// M -> MoveTo
+		fsm.registerDefaultTransition(M,M) ;//continue to moveTo nodeGoal
+		fsm.registerTransition(M,H, 10) ;//arrived to nodeGoal
+		fsm.registerTransition(M,A, 2) ;//moveTo fail mission, back to explo
 		
-		//CHECK SOMETHING
-		fsm.registerTransition(E,F, 2) ;//Cond 3, got strange wait
-		fsm.registerTransition(E,K, 3) ;//Cond 3, got strange wait
-		fsm.registerTransition(E,J, 7) ;//Cond 3, got strange wait
-		fsm.registerDefaultTransition(J,E) ;//wait to success block
-		fsm.registerTransition(E,C, 4) ;//Cond 3, got strange wait
-		fsm.registerDefaultTransition(K,J) ;//wait to success block
-		fsm.registerTransition(J,L, 1) ;//Cond 3, got strange wait
-		fsm.registerTransition(L,E, 1) ;//Cond 3, got strange wait
-		fsm.registerTransition(L,F, 2) ;//Cond 3, got strange wait
-		fsm.registerDefaultTransition(L,L) ;//wait to success block
-		
-		fsm.registerDefaultTransition(M,M) ;//wait to success block
-		fsm.registerTransition(M,H, 10) ;//Cond 3, got strange wait
-		fsm.registerTransition(M,A, 2) ;//Cond 3, got strange wait
-		fsm.registerTransition(A,M, 6) ;//Cond 3, got strange wait
-		fsm.registerTransition(E,M, 5) ;//Cond 3, got strange wait
-		fsm.registerTransition(E,H, 6) ;//Cond 3, got strange wait
-		
-		fsm.registerTransition(E,Z, 99) ;//Cond 1, End Chase
+		// this is not used
+		fsm.registerTransition(E,Z, 99) ;//END
 		
 		this.lb=new ArrayList<Behaviour>();
 		this.lb.add(fsm);
