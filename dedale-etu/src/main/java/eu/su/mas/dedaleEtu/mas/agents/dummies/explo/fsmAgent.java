@@ -146,8 +146,8 @@ public class fsmAgent extends AbstractDedaleAgent {
 		
 		//CHECK SOMETHING
 		fsm.registerTransition(E,F, 2) ;//Cond 3, got strange wait
-		//fsm.registerTransition(E,K, 3) ;//Cond 3, got strange wait
-		//fsm.registerTransition(E,J, 7) ;//Cond 3, got strange wait
+		fsm.registerTransition(E,K, 3) ;//Cond 3, got strange wait
+		fsm.registerTransition(E,J, 7) ;//Cond 3, got strange wait
 		fsm.registerDefaultTransition(J,E) ;//wait to success block
 		fsm.registerTransition(E,C, 4) ;//Cond 3, got strange wait
 		fsm.registerDefaultTransition(K,J) ;//wait to success block
@@ -163,7 +163,7 @@ public class fsmAgent extends AbstractDedaleAgent {
 		fsm.registerTransition(E,M, 5) ;//Cond 3, got strange wait
 		fsm.registerTransition(E,H, 6) ;//Cond 3, got strange wait
 		
-		fsm.registerTransition(E,Z, 1) ;//Cond 1, End Chase
+		fsm.registerTransition(E,Z, 99) ;//Cond 1, End Chase
 		
 		this.lb=new ArrayList<Behaviour>();
 		this.lb.add(fsm);

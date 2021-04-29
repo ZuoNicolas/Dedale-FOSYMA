@@ -37,6 +37,7 @@ public class SuccessBlockBehaviour extends OneShotBehaviour {
 
 	@Override
 	public void action() {
+		((fsmAgent)this.myAgent).successBlock = true;
 		myPosition = ((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 		myMap = ((fsmAgent)this.myAgent).getMap();
 		exitValue = 0;

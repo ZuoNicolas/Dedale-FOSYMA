@@ -32,7 +32,8 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 	
 	private String nodeGoal = "";
 	
-	private int timer, nb_move_fail, max_move_fail=((fsmAgent)this.myAgent).AgentSensitivity;
+	private int timer, nb_move_fail;
+	private double max_move_fail=((fsmAgent)this.myAgent).AgentSensitivity/2;
 	
 	private String oldNode="";
 	
@@ -231,7 +232,7 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 			if ( nb_move_fail >= max_move_fail) {
 				nb_move_fail = 0;
 				System.out.println(this.myAgent.getLocalName() + " --> Something block me ! (stop move)");
-				this.exitValue = 2;
+				this.exitValue = 3;
 				return ;
 			}
 			nb_move_fail++;
@@ -351,7 +352,7 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
     		if ( m.equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())) {
         		System.out.println(this.myAgent.getLocalName() + " --> Receive a check Someone msg");
         		((fsmAgent)this.myAgent).agentToContact = msgS.getSender().getLocalName();
-        		exitValue = 2;
+        		exitValue = 7;
         		return true;
     		}
     	}
