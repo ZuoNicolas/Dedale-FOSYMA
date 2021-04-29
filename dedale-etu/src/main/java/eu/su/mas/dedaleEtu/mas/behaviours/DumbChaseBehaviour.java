@@ -209,7 +209,7 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 				}
 
 			}else {
-				System.out.println(this.myAgent.getLocalName()+" ---> Find a Golem's poop");
+				//System.out.println(this.myAgent.getLocalName()+" ---> Find a Golem's poop");
 			}
 
 			((fsmAgent)this.myAgent).nextNode=nextNode;
