@@ -41,8 +41,16 @@ public class fsmAgent extends AbstractDedaleAgent {
 	
 	private static final int PokeTime = 3000;
 	
+	/*
+	 * If you increase the speed, that is to say by lowering the time of the doWait, 
+	 * then it will be necessary to increase the sensitivity of the agent 
+	 * to leave the time that our agents to share their card, 
+	 * which is fixed in hard has check every 5000ms.
+	 * And if you lower the speed of the agents, 
+	 * then you should lower the sensitivity so that our agents are not stuck in place for too long!	
+	*/
 	public final int AgentSpeed=300;//doWait every AgentSpeed ms
-	public final int AgentSensitivity=20;//number of times it is blocked before checking if it is a golem
+	public final int AgentSensitivity=20;//number of times it is blocked before checking if it is a golem (Only on ExploCoopBehaviour), on DumbChase AgentSinsitivity = 1, for optimize the chase mode
 	
 	private int nbAgent;
 	

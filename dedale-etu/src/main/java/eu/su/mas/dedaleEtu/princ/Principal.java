@@ -396,7 +396,7 @@ public class Principal {
 		agentName="1stAgent";
 		
 		//3) If you want to give specific parameters to your agent, add them here
-		Object [] entityParametersExplo4={"2ndAgent","3ndAgent","4ndAgent"};
+		Object [] entityParametersExplo4={"2ndAgent","3ndAgent"};
 		
 		//4) Give the class name of your agent to let the system instantiate it
 		//ag=createNewDedaleAgent(c, agentName, ExploreCoopAgent.class.getName(), entityParametersExplo4);//ExploreSoloAgent
@@ -415,7 +415,7 @@ public class Principal {
 		agentName="2ndAgent";
 		
 		//3) If you want to give specific parameters to your agent, add them here
-		Object [] entityParametersExplo5={"1stAgent","3ndAgent","4ndAgent"};
+		Object [] entityParametersExplo5={"1stAgent","3ndAgent"};
 		
 		//4) Give the class name of your agent to let the system instantiate it
 		ag=createNewDedaleAgent(c, agentName, fsmAgent.class.getName(), entityParametersExplo5);//ExploreSoloAgent
@@ -434,7 +434,7 @@ public class Principal {
 		agentName="3ndAgent";
 		
 		//3) If you want to give specific parameters to your agent, add them here
-		Object [] entityParametersExplo6={"1stAgent","2ndAgent","4ndAgent"};
+		Object [] entityParametersExplo6={"1stAgent","2ndAgent"};
 		
 		//4) Give the class name of your agent to let the system instantiate it
 		ag=createNewDedaleAgent(c, agentName, fsmAgent.class.getName(), entityParametersExplo6);//ExploreSoloAgent
@@ -443,7 +443,7 @@ public class Principal {
 		/*********
 //		 * AGENT Explo7
 		 *********/
-		
+		/*
 		//1) Get the container where the agent will appear
 		c = containerList.get(ConfigurationFile.LOCAL_CONTAINER2_NAME);
 		Assert.assertNotNull("This container does not exist",c);
@@ -458,7 +458,7 @@ public class Principal {
 		ag=createNewDedaleAgent(c, agentName, fsmAgent.class.getName(), entityParametersExplo7);//ExploreSoloAgent
 		
 		agentList.add(ag);
-		
+		*/
 	/***********************************************************************
 	 * Type of agents used when you collect and gather treasures on the map
 	 ***********************************************************************/
