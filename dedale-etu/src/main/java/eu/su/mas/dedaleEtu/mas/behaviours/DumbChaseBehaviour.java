@@ -116,6 +116,8 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 				
 				if(SuccessMove) {
 					System.out.println(this.myAgent.getLocalName()+" ---> I find a node to back ! Good luck to your important mision ");
+					modeLeavePath = false;
+					leavePath= null;
 				}else {
 					System.out.println(this.myAgent.getLocalName()+" ---> Sorry I find a node to back, but something block me ");
 					sendSorryMsg();
