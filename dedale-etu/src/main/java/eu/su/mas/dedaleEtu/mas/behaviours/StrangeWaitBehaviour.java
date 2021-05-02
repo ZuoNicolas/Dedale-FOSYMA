@@ -46,7 +46,7 @@ public class StrangeWaitBehaviour extends OneShotBehaviour {
 			Couple<String, List<Couple<Observation, Integer>>> node = iter.next();
 			String nodeId= node.getLeft();
 
-			if (myPosition!=nodeId) {
+		if (myPosition!=nodeId) {
 				this.myMap.addEdge(myPosition, nodeId);
 				if (nextNode==null && nodeId.equals(((fsmAgent)this.myAgent).nextNode)) nextNode=nodeId;
 			}
