@@ -6,5 +6,5 @@ dedale-etu\src\main\java\eu\su\mas\dedaleEtu\princ\Principal.java
 
 and if necessary do a Maven update before
 
-<a href="username.github.io/folder/document.pdf" target="_blank">PDF.</a>
+<a href="username.github.io/Rapport_FOSYMA.pdf" target="_blank">PDF.</a>
 
