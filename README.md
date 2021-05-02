@@ -5,3 +5,6 @@ For a quick launch, you have to launch the java file below:
 dedale-etu\src\main\java\eu\su\mas\dedaleEtu\princ\Principal.java
 
 and if necessary do a Maven update before
+
+<a href="username.github.io/folder/document.pdf" target="_blank">PDF.</a>
+
