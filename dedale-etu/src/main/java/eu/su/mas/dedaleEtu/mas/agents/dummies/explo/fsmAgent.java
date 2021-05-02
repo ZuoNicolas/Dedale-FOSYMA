@@ -35,14 +35,14 @@ public class fsmAgent extends AbstractDedaleAgent {
 	private static final long serialVersionUID = 1161691655438824095L;
 	private MapRepresentation myMap;
 	
-	public boolean move=true, succesMerge=false, changeNode=false, successBlock=false, forceChangeNode=false, endExplo=false;
+	public boolean move=true, succesMerge=false, changeNode=false, successBlock=false, forceChangeNode=false, endExplo=false, needToCheck=false;
 	public List<String> NodeToBlock, blockedAgent= new ArrayList<String>(), GolemPoop = new ArrayList<String>();
-	public String nextNode, agentToContact, moveTo;
+	public String nextNode, agentToContact, moveTo, WumpusPos;
 	
 	private static final int PokeTime = 3000;
 	
 	public final int AgentSpeed=300;//doWait every AgentSpeed ms
-	public final int AgentSensitivity=30;//number of times it is blocked before checking if it is a golem
+	public final int AgentSensitivity=20;//number of times it is blocked before checking if it is a golem
 	
 	private int nbAgent;
 	
@@ -140,6 +140,7 @@ public class fsmAgent extends AbstractDedaleAgent {
 		fsm.registerTransition(E,M, 5) ;//go to MoveTo, for help to block a note
 		fsm.registerTransition(E,H, 6) ;//Go directly to needHelp Behaviour
 		fsm.registerTransition(E,J, 7) ;//Go to confirm he is not a Wumpus
+		fsm.registerTransition(E,A, 8) ;//Go back to exploration
 		// F -> CheckWumpusBlocked
 		fsm.registerDefaultTransition(F,A) ;//Back to Explo		
 		fsm.registerTransition(F,G, 1) ;//go to succes block

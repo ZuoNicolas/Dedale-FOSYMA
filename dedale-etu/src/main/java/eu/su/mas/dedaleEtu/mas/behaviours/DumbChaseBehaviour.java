@@ -33,7 +33,7 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 	private String nodeGoal = "";
 	
 	private int timer, nb_move_fail;
-	private double max_move_fail=((fsmAgent)this.myAgent).AgentSensitivity/2;
+	private double max_move_fail=1;
 	
 	private String oldNode="";
 	
@@ -129,19 +129,30 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 		if (((fsmAgent)this.myAgent).moveTo != null) {
 			this.exitValue = 5;
 		}
+		//Go to check
+		if(((fsmAgent)this.myAgent).needToCheck) {
+			((fsmAgent)this.myAgent).needToCheck = false;
+			this.exitValue = 3;
+			return ;
+		}
 		
-		if (firstTime) {
+		if (firstTime && ((fsmAgent)this.myAgent).endExplo) {
 			firstTime=false;
 			System.out.println(this.myAgent.getLocalName()+" Start Chase !");
 		}
 		//Check every msg
 		if(checkMsg()) {
-			clearMail();
+			//clearMail();
 			return ;
 		}
 
-		
 		this.myMap = ((fsmAgent)this.myAgent).getMap();
+		
+		if (this.myMap.hasOpenNode()){
+			this.exitValue = 8;//Back to exploration
+			System.out.println(this.myAgent.getLocalName()+" ---> Exploration not done, go back to exploration");
+			return ;
+		}
 
 		//0) Retrieve the current position
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
@@ -238,6 +249,21 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 	//check msg	
 	public boolean checkMsg() {
 		
+    	final MessageTemplate msgSomeone = MessageTemplate.and(MessageTemplate.MatchProtocol("ProtocoleSomeone"),
+				MessageTemplate.MatchPerformative(ACLMessage.INFORM));	
+    	final ACLMessage msgS = this.myAgent.receive(msgSomeone);
+    	
+    	if (msgS != null) {
+    		String m =msgS.getContent();//sender next node
+    		//If his nextNode is my current pos
+    		if ( m.equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())) {
+        		System.out.println(this.myAgent.getLocalName() + " --> Receive a check Someone msg");
+        		((fsmAgent)this.myAgent).agentToContact = msgS.getSender().getLocalName();
+        		exitValue = 7;
+        		return true;
+    		}
+    	}
+		
 		while(true) {
 			MessageTemplate msgTemplatelp=MessageTemplate.and(
 					MessageTemplate.MatchProtocol("ProtocoleLeavePath"),
@@ -328,27 +354,13 @@ public class DumbChaseBehaviour extends OneShotBehaviour{
 				((fsmAgent)this.myAgent).moveTo = ((fsmAgent)this.myAgent).NodeToBlock.get(0);
 				((fsmAgent)this.myAgent).NodeToBlock.remove(0);
 				((fsmAgent)this.myAgent).blockedAgent.add(AgentNextPos);
+				((fsmAgent)this.myAgent).WumpusPos = AgentNextPos;
 				System.out.println(this.myAgent.getLocalName() + " --> Go to MoveToBehaviour "+((fsmAgent)this.myAgent).moveTo);
 				exitValue = 5;
 				return true;
 			}
 			return false;
 			
-    	}
-    	
-    	final MessageTemplate msgSomeone = MessageTemplate.and(MessageTemplate.MatchProtocol("ProtocoleSomeone"),
-				MessageTemplate.MatchPerformative(ACLMessage.INFORM));	
-    	final ACLMessage msgS = this.myAgent.receive(msgSomeone);
-    	
-    	if (msgS != null) {
-    		String m =msgS.getContent();
-    		//If his nextNode is my current pos
-    		if ( m.equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())) {
-        		System.out.println(this.myAgent.getLocalName() + " --> Receive a check Someone msg");
-        		((fsmAgent)this.myAgent).agentToContact = msgS.getSender().getLocalName();
-        		exitValue = 7;
-        		return true;
-    		}
     	}
     	
     	final MessageTemplate msgBy = MessageTemplate.and(MessageTemplate.MatchProtocol("ProtocoleByPass"),

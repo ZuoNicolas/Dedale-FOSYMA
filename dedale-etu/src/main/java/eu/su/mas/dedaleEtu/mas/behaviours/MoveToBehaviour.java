@@ -48,6 +48,7 @@ public class MoveToBehaviour extends OneShotBehaviour {
 		if(((fsmAgent)this.myAgent).moveTo.equals(myPosition)) {
 			((fsmAgent)this.myAgent).moveTo = null;
 			((fsmAgent)this.myAgent).blockedAgent.clear();
+			((fsmAgent)this.myAgent).nextNode = ((fsmAgent)this.myAgent).WumpusPos ;
 			System.out.println(this.myAgent.getLocalName()+" ---> moveTo successfull, go to NeedHelpBehaviour");
 			((fsmAgent)this.myAgent).NodeToBlock.remove(myPosition);
 			this.exitValue = 10;

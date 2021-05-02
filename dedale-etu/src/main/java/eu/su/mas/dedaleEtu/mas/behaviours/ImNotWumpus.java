@@ -17,16 +17,17 @@ public class ImNotWumpus extends OneShotBehaviour {
 
 	@Override
 	public void action() {
+		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 		int lastExit = ((fsmAgent)this.myAgent).getFSM().getLastExitValue();
 		exitValue = 0;
-		if (lastExit != 2) {
+		if (lastExit != 7) {
 			exitValue = 1;
 			
 			ACLMessage msg=new ACLMessage(ACLMessage.INFORM);
 			msg.setProtocol("ProtocoleWaitSomeone");
 			msg.setSender(this.myAgent.getAID());
 			System.out.println(this.myAgent.getLocalName()+ " ---> Are you a Wumpus ? ");
-			msg.setContent(((fsmAgent)this.myAgent).nextNode);
+			msg.setContent(myPosition);
 
 			for(String n: ((fsmAgent)this.myAgent).getList_AgentNames()) {
 				msg.addReceiver(new AID(n,AID.ISLOCALNAME));
@@ -39,7 +40,7 @@ public class ImNotWumpus extends OneShotBehaviour {
 			msg.setProtocol("ProtocoleWaitSomeone");
 			msg.setSender(this.myAgent.getAID());
 			System.out.println(this.myAgent.getLocalName()+ " ---> I'm not a Wumpus "+((fsmAgent)this.myAgent).agentToContact);
-			msg.setContent(((fsmAgent)this.myAgent).nextNode);
+			msg.setContent(myPosition);
 
 
 			msg.addReceiver(new AID(((fsmAgent)this.myAgent).agentToContact,AID.ISLOCALNAME));

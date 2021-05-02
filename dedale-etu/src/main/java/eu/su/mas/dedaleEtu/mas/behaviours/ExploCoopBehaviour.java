@@ -66,6 +66,9 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 	private List<String> temp, leavePath;
 	
 	private List<Couple<String,Integer>> list_spam = new ArrayList<>();
+
+	private int cpt_null, max_null=5;
+
 /**
  * 
  * @param myagent
@@ -160,7 +163,7 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 		//Check every msg et check timer
 		if(((fsmAgent)this.myAgent).nextNode != null) {
 			if(checkMsg() || checkTimer()) {
-				clearMail();
+				//clearMail();
 				return ;
 			}
 		}
@@ -225,6 +228,7 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 								List<String> opennodes=this.myMap.getOpenNodes();
 								Random rand = new Random();
 								nodeGoal = opennodes.get(rand.nextInt(opennodes.size()));
+								cpt_null=0;
 							}
 							temp = this.myMap.getShortestPath(myPosition, nodeGoal, ((fsmAgent)this.myAgent).blockedAgent);
 
@@ -237,6 +241,13 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 								nodeGoal = "";
 								((fsmAgent)this.myAgent).blockedAgent.clear();
 								System.out.println(this.myAgent.getLocalName()+" ---> null Path, reset");
+								
+								if (cpt_null >= max_null && this.myMap.getOpenNodes().size()==1) {
+									this.myMap.addNode(this.myMap.getOpenNodes().get(0), MapAttribute.closed);
+									System.out.println(this.myAgent.getLocalName()+" --->  Max null Path, auto closed the last node");
+								}
+								cpt_null++;
+								
 								return ;
 							}
 							
@@ -253,6 +264,13 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 							}else {
 								((fsmAgent)this.myAgent).blockedAgent.clear();
 								System.out.println(this.myAgent.getLocalName()+" ---> null Path, reset");
+								
+								if (cpt_null >= max_null && this.myMap.getOpenNodes().size()==1) {
+									this.myMap.addNode(this.myMap.getOpenNodes().get(0), MapAttribute.closed);
+									System.out.println(this.myAgent.getLocalName()+" --->  Max null Path, auto closed the last node");
+								}
+								cpt_null++;
+								
 								return ;
 							}
 							nextNode=temp.get(0);//getShortestPath(myPosition,this.openNodes.get(0)).get(0);
@@ -271,8 +289,9 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 				if (!SuccessMove) {
 					//mas_move_fail = the Agent sensibility
 					if ( nb_move_fail >= max_move_fail) {
-						System.out.println(this.myAgent.getLocalName() + " --> I probably blocked a Wumpus ! (stop move)");
-						this.exitValue = 3;
+						((fsmAgent)this.myAgent).needToCheck = true;
+						System.out.println(this.myAgent.getLocalName() + " --> I probably blocked a Wumpus, need to check ! (stop move)");
+						this.exitValue = 4;
 						return ;
 					}
 					nb_move_fail++;
@@ -405,12 +424,27 @@ public class ExploCoopBehaviour extends OneShotBehaviour {
 				((fsmAgent)this.myAgent).moveTo = ((fsmAgent)this.myAgent).NodeToBlock.get(0);
 				((fsmAgent)this.myAgent).NodeToBlock.remove(0);
 				((fsmAgent)this.myAgent).blockedAgent.add(AgentNextPos);
+				((fsmAgent)this.myAgent).WumpusPos = AgentNextPos;
 				System.out.println(this.myAgent.getLocalName() + " --> Go to MoveToBehaviour "+((fsmAgent)this.myAgent).moveTo);
 				exitValue = 6;
 				return true;
 			}
 			return false;
 			
+    	}
+    	final MessageTemplate msgSomeone = MessageTemplate.and(MessageTemplate.MatchProtocol("ProtocoleSomeone"),
+				MessageTemplate.MatchPerformative(ACLMessage.INFORM));	
+    	final ACLMessage msgS = this.myAgent.receive(msgSomeone);
+    	
+    	if (msgS != null) {
+    		String m =msgS.getContent();
+    		//If his nextNode is my current pos
+    		if ( m.equals(((AbstractDedaleAgent)this.myAgent).getCurrentPosition())) {
+    			((AbstractDedaleAgent)this.myAgent).postMessage(msgS);
+        		System.out.println(this.myAgent.getLocalName() + " --> Receive a check Someone msg on ExploCoop, go to Chase mode to check");
+        		exitValue = 4;
+        		return true;
+    		}
     	}
 		return false;
 	}

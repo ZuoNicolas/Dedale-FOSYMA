@@ -108,6 +108,7 @@ public class SuccessBlockBehaviour extends OneShotBehaviour {
 				((fsmAgent)this.myAgent).updateMap(myMap);
 				((fsmAgent)this.myAgent).successBlock = true;
 				if(!ShareMapAgent.contains(msg.getSender().getLocalName())) {
+					ShareMapAgent.add(msg.getSender().getLocalName());
 					exitValue = 1;
 				}
 			}

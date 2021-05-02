@@ -34,7 +34,7 @@ public class NeedHelpBehaviour extends OneShotBehaviour {
 	private List<String> NodeToBlock, News, agentToContact = ((fsmAgent) this.myAgent).getList_AgentNames();
 	private int exitValue;
 
-	private boolean SuccessMove, size;
+	private boolean SuccessMove, change;
 	
 	public NeedHelpBehaviour(Agent a) {
 		super(a);
@@ -46,65 +46,8 @@ public class NeedHelpBehaviour extends OneShotBehaviour {
 		nextNode = ((fsmAgent)this.myAgent).nextNode;
 		myMap = ((fsmAgent)this.myAgent).getMap();
 		NodeToBlock = ((fsmAgent)this.myAgent).NodeToBlock;
-		size = false;
-		
-    	final MessageTemplate msgTemplateW = MessageTemplate.and(MessageTemplate.MatchProtocol("ProtocoleWumpusPos"),
-				MessageTemplate.MatchPerformative(ACLMessage.INFORM));	
-    	final ACLMessage msgW = this.myAgent.receive(msgTemplateW);
-    	//Give the Wumpus Position
-    	if(msgW != null) {
-    		//check if is the same node to block
-    		if ( NodeToBlock.contains(msgW.getContent())) {
-        		System.out.println(this.myAgent.getLocalName()+ " ---> Receive ProtocoleWumpusPos");
-    			ACLMessage sendMsg=new ACLMessage(ACLMessage.INFORM);
-    			sendMsg.setProtocol("ProtocoleGiveWumpusPos");
-    			sendMsg.setSender(this.myAgent.getAID());
-    			
-    			sendMsg.setContent(((fsmAgent)this.myAgent).nextNode);
-
-    			sendMsg.addReceiver(new AID(msgW.getSender().getLocalName(),AID.ISLOCALNAME));
-
-    			//Mandatory to use this method (it takes into account the environment to decide if someone is reachable or not)
-    			((AbstractDedaleAgent)this.myAgent).sendMessage(sendMsg);
-    		}
-
-    	}
-		
-		int lastExit = ((fsmAgent)this.myAgent).getFSM().getLastExitValue();
-		// If i come from MoveTo, I need to know where the wumpus is
-		// Send a msg to know where the Wumpus is, and after back to NeedHelpBehaviour to update NodetoBlock
-		if (lastExit == 10) {
-			ACLMessage sendMsg=new ACLMessage(ACLMessage.INFORM);
-			sendMsg.setProtocol("ProtocoleWumpusPos");
-			sendMsg.setSender(this.myAgent.getAID());
-			
-			sendMsg.setContent(myPosition);
-
-			for( String n : ((fsmAgent)this.myAgent).getList_AgentNames()) {
-				sendMsg.addReceiver(new AID(n,AID.ISLOCALNAME));
-			}
-			//Mandatory to use this method (it takes into account the environment to decide if someone is reachable or not)
-			((AbstractDedaleAgent)this.myAgent).sendMessage(sendMsg);
-        	exitValue = 10;
-        	block(5000);
-        	
-        	final MessageTemplate msgTemplateG = MessageTemplate.and(MessageTemplate.MatchProtocol("ProtocoleGiveWumpusPos"),
-    				MessageTemplate.MatchPerformative(ACLMessage.INFORM));	
-        	final ACLMessage msgG = this.myAgent.receive(msgTemplateG);
-        	int cpt = 0, max_cpt=2;
-        	while(msgG == null) {
-        		block(5000);
-        		if(cpt>=max_cpt) {
-        			System.out.println(this.myAgent.getLocalName() + " --> I arrived too late ! (NeedHelpBehaviour)");
-        			exitValue = 2;
-        			return ;
-        		}
-        		cpt++;
-        	}
-        	((fsmAgent)this.myAgent).nextNode = msgG.getContent();
-        	exitValue = 0;
-        	return ;
-		}
+		change = false;
+		exitValue = 0;
 
     	final MessageTemplate msgTemplateEnd = MessageTemplate.and(MessageTemplate.MatchProtocol("ProtocoleNodeBlocked"),
 				MessageTemplate.MatchPerformative(ACLMessage.INFORM));	
@@ -177,7 +120,8 @@ public class NeedHelpBehaviour extends OneShotBehaviour {
 		    			while (itr.hasNext()) {
 		    				String n = itr.next(); 
 		    				if (!NodeToBlock.contains(n)) { 
-		    					itr.remove(); 
+		    					itr.remove();
+		    					change = true;
 		    				} 
 		    			}
 					}
@@ -224,59 +168,65 @@ public class NeedHelpBehaviour extends OneShotBehaviour {
 			
 			((fsmAgent)this.myAgent).NodeToBlock = NodeToBlock;
     		//If receive a message send him especially the all node to block
-    		if (msg != null || size ) {
-    			System.out.println(this.myAgent.getLocalName() + " --> Receive msg from "+msg.getSender().getLocalName());
-    			System.out.print(this.myAgent.getLocalName() + " --> Need to block ");
-    			for(String n: NodeToBlock) {
-    				System.out.print(n+" ");
-    			}
-    			System.out.println();
-    			NodeToBlock.add(0, ((fsmAgent)this.myAgent).nextNode);
-    			NodeToBlock.add(0, myPosition);
-    			ACLMessage sendMsg=new ACLMessage(ACLMessage.INFORM);
-    			sendMsg.setProtocol("ProtocoleHelpBlockWumpus");
-    			sendMsg.setSender(this.myAgent.getAID());
-    			
-    			try {
-					sendMsg.setContentObject((Serializable) NodeToBlock);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+    		if (msg != null ) {
+    			//If nothing change with msgBlock, do not send again
+    			if(!change && msgBlock == null) {
+        			System.out.println(this.myAgent.getLocalName() + " --> Receive msg from "+msg.getSender().getLocalName());
+        			System.out.print(this.myAgent.getLocalName() + " --> Need to block ");
+        			for(String n: NodeToBlock) {
+        				System.out.print(n+" ");
+        			}
+        			System.out.println();
+        			NodeToBlock.add(0, ((fsmAgent)this.myAgent).nextNode);
+        			NodeToBlock.add(0, myPosition);
+        			ACLMessage sendMsg=new ACLMessage(ACLMessage.INFORM);
+        			sendMsg.setProtocol("ProtocoleHelpBlockWumpus");
+        			sendMsg.setSender(this.myAgent.getAID());
+        			
+        			try {
+    					sendMsg.setContentObject((Serializable) NodeToBlock);
+    				} catch (IOException e) {
+    					e.printStackTrace();
+    				}
 
-    			sendMsg.addReceiver(new AID(msg.getSender().getLocalName(),AID.ISLOCALNAME));
-    			
-    			//Mandatory to use this method (it takes into account the environment to decide if someone is reachable or not)
-    			((AbstractDedaleAgent)this.myAgent).sendMessage(sendMsg);
-    			NodeToBlock.remove(0);
-    			NodeToBlock.remove(0);
+        			sendMsg.addReceiver(new AID(msg.getSender().getLocalName(),AID.ISLOCALNAME));
+        			
+        			//Mandatory to use this method (it takes into account the environment to decide if someone is reachable or not)
+        			((AbstractDedaleAgent)this.myAgent).sendMessage(sendMsg);
+        			NodeToBlock.remove(0);
+        			NodeToBlock.remove(0);
+    			}
+
     		}else {
-    			//If no msg send every 5000ms a need help to block to every agent around
-    			System.out.println(this.myAgent.getLocalName() + " --> Send a Help to block Wumpus msg");
-    			System.out.print(this.myAgent.getLocalName() + " --> Need to block ");
-    			for(String n: NodeToBlock) {
-    				System.out.print(n+" ");
-    			}
-    			System.out.println();
-    			NodeToBlock.add(0, ((fsmAgent)this.myAgent).nextNode);
-    			NodeToBlock.add(0, myPosition);
-    			ACLMessage sendMsg=new ACLMessage(ACLMessage.INFORM);
-    			sendMsg.setProtocol("ProtocoleHelpBlockWumpus");
-    			sendMsg.setSender(this.myAgent.getAID());
-    			
-    			try {
-					sendMsg.setContentObject((Serializable) NodeToBlock);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+    			//If nothing change with msgBlock, do not send again
+    			if(!change && msgBlock == null) {
+        			//If no msg send every 5000ms a need help to block to every agent around
+        			System.out.println(this.myAgent.getLocalName() + " --> Send a Help to block Wumpus msg");
+        			System.out.print(this.myAgent.getLocalName() + " --> Need to block ");
+        			for(String n: NodeToBlock) {
+        				System.out.print(n+" ");
+        			}
+        			System.out.println();
+        			NodeToBlock.add(0, ((fsmAgent)this.myAgent).nextNode);
+        			NodeToBlock.add(0, myPosition);
+        			ACLMessage sendMsg=new ACLMessage(ACLMessage.INFORM);
+        			sendMsg.setProtocol("ProtocoleHelpBlockWumpus");
+        			sendMsg.setSender(this.myAgent.getAID());
+        			
+        			try {
+    					sendMsg.setContentObject((Serializable) NodeToBlock);
+    				} catch (IOException e) {
+    					e.printStackTrace();
+    				}
 
-    			for (String agentName : agentToContact) {
-    				sendMsg.addReceiver(new AID(agentName,AID.ISLOCALNAME));
+        			for (String agentName : agentToContact) {
+        				sendMsg.addReceiver(new AID(agentName,AID.ISLOCALNAME));
+        			}
+        			//Mandatory to use this method (it takes into account the environment to decide if someone is reachable or not)
+        			((AbstractDedaleAgent)this.myAgent).sendMessage(sendMsg);
+        			NodeToBlock.remove(0);
+        			NodeToBlock.remove(0);
     			}
-    			//Mandatory to use this method (it takes into account the environment to decide if someone is reachable or not)
-    			((AbstractDedaleAgent)this.myAgent).sendMessage(sendMsg);
-    			NodeToBlock.remove(0);
-    			NodeToBlock.remove(0);
-        		
     		}
         }
         

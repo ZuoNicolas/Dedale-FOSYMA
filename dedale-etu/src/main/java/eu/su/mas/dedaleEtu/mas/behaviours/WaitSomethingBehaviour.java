@@ -1,5 +1,7 @@
 package eu.su.mas.dedaleEtu.mas.behaviours;
 
+import java.util.List;
+
 import dataStructures.serializableGraph.SerializableSimpleGraph;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.agents.dummies.explo.fsmAgent;
@@ -36,16 +38,62 @@ public class WaitSomethingBehaviour extends OneShotBehaviour {
 		ACLMessage msg=this.myAgent.receive(msgTemplate);
 		
 		if (msg != null) {
-			String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
-			//Check if the Sender want to come on my position or not
-			if(myPosition.equals(msg.getContent())) {
+			//Check if the Sender position is my next node
+			if(((fsmAgent)this.myAgent).nextNode.equals(msg.getContent())) {
 				this.myMap = ((fsmAgent)this.myAgent).getMap();
-				System.out.println(this.myAgent.getLocalName()+" <--- The Someone is "+msg.getSender().getLocalName()+", back to chase");
+				System.out.println(this.myAgent.getLocalName()+" <--- The Someone is "+msg.getSender().getLocalName()+", back to chase (ProtocoleWaitSomeone)");
 				((fsmAgent)this.myAgent).GolemPoop.add(((fsmAgent)this.myAgent).nextNode);
 				((fsmAgent)this.myAgent).blockedAgent.add(((fsmAgent)this.myAgent).nextNode);
+				haveMsg=true;
 				this.exitValue=1;
+				return ; 
 			}
 		}else{
+			final MessageTemplate msgTemplateB = MessageTemplate.and(MessageTemplate.MatchProtocol("ProtocoleByPass"),
+					MessageTemplate.MatchPerformative(ACLMessage.INFORM));	
+			final ACLMessage msgB = this.myAgent.receive(msgTemplateB);
+			
+			if (msgB != null) {
+				//Check if the Sender position is my next node
+				if(((fsmAgent)this.myAgent).nextNode.equals(msgB.getContent())) {
+					this.myMap = ((fsmAgent)this.myAgent).getMap();
+					System.out.println(this.myAgent.getLocalName()+" <--- The Someone is "+msgB.getSender().getLocalName()+", back to chase (ProtocoleByPass)");
+					((fsmAgent)this.myAgent).GolemPoop.add(((fsmAgent)this.myAgent).nextNode);
+					((fsmAgent)this.myAgent).blockedAgent.add(((fsmAgent)this.myAgent).nextNode);
+					haveMsg=true;
+					this.exitValue=1;
+					return ;
+				}
+			}
+			
+        	final MessageTemplate msgTemplate2 = MessageTemplate.and(MessageTemplate.MatchProtocol("ProtocoleHelpBlockWumpus"),
+					MessageTemplate.MatchPerformative(ACLMessage.INFORM));	
+			final ACLMessage msgBlock = this.myAgent.receive(msgTemplate2);
+			
+			//Receive another around agents help msg
+			if(msgBlock != null) {
+				List<String> News = null;
+				try {
+					News = (List<String>) msgBlock.getContentObject();
+				} catch (UnreadableException e) {
+					e.printStackTrace();
+				}
+				if (News != null) {
+					String pos = News.get(0); //get Sender Position
+					//Check if the Sender position is my next node
+					if(((fsmAgent)this.myAgent).nextNode.equals(pos)) {
+						this.myMap = ((fsmAgent)this.myAgent).getMap();
+						System.out.println(this.myAgent.getLocalName()+" <--- The Someone is "+msgBlock.getSender().getLocalName()+", back to chase (ProtocoleHelpBlockWumpus)");
+						((fsmAgent)this.myAgent).GolemPoop.add(((fsmAgent)this.myAgent).nextNode);
+						((fsmAgent)this.myAgent).blockedAgent.add(((fsmAgent)this.myAgent).nextNode);
+						haveMsg=true;
+						this.exitValue=1;
+						return ;
+					}
+				}
+			}
+			
+			
 			if ( !haveMsg ) {
 				haveMsg=true;
 				this.exitValue=2;
