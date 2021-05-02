@@ -1,2 +1,1 @@
-"# Projet-Dedale-FOSYMA" 
-"# Dedale-FOSYMA" 
+Read Rapport_FOSYMA.pdf (only french version)
