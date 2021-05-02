@@ -54,7 +54,7 @@ public class StrangeWaitBehaviour extends OneShotBehaviour {
 		((fsmAgent)this.myAgent).nextNode = nextNode;
 		
         if (((fsmAgent)this.myAgent).nextNode == null) {
-        	exitValue = 2;
+        	exitValue = 1;
         	return ;
         }
         

@@ -89,7 +89,13 @@ public class SuccessBlockBehaviour extends OneShotBehaviour {
 		
 			//If receive a message, don't move
 			if (msg != null) {
-
+				
+				if (msg.getProtocol().equals("ProtocoleSomeone")){
+					//Skip if he don't to come on my node
+					if (!msg.getContent().equals(((fsmAgent)this.myAgent).nextNode)){
+						return ;
+					}
+				}
 				
 				System.out.println(this.myAgent.getLocalName() + " --> Receive msg, I am not a Golem bypass me ("+((AbstractDedaleAgent)this.myAgent).getCurrentPosition()+")");
 				

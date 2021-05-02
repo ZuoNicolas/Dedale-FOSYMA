@@ -172,11 +172,8 @@ public class NeedHelpBehaviour extends OneShotBehaviour {
     			//If nothing change with msgBlock, do not send again
     			if(!change && msgBlock == null) {
         			System.out.println(this.myAgent.getLocalName() + " --> Receive msg from "+msg.getSender().getLocalName());
-        			System.out.print(this.myAgent.getLocalName() + " --> Need to block ");
-        			for(String n: NodeToBlock) {
-        				System.out.print(n+" ");
-        			}
-        			System.out.println();
+        			System.out.println(this.myAgent.getLocalName() + " --> Need to block "+NodeToBlock);
+
         			NodeToBlock.add(0, ((fsmAgent)this.myAgent).nextNode);
         			NodeToBlock.add(0, myPosition);
         			ACLMessage sendMsg=new ACLMessage(ACLMessage.INFORM);
@@ -202,11 +199,8 @@ public class NeedHelpBehaviour extends OneShotBehaviour {
     			if(!change && msgBlock == null) {
         			//If no msg send every 5000ms a need help to block to every agent around
         			System.out.println(this.myAgent.getLocalName() + " --> Send a Help to block Wumpus msg");
-        			System.out.print(this.myAgent.getLocalName() + " --> Need to block ");
-        			for(String n: NodeToBlock) {
-        				System.out.print(n+" ");
-        			}
-        			System.out.println();
+        			System.out.println(this.myAgent.getLocalName() + " --> Need to block "+NodeToBlock);
+        			
         			NodeToBlock.add(0, ((fsmAgent)this.myAgent).nextNode);
         			NodeToBlock.add(0, myPosition);
         			ACLMessage sendMsg=new ACLMessage(ACLMessage.INFORM);
@@ -276,7 +270,7 @@ public class NeedHelpBehaviour extends OneShotBehaviour {
 			}
 			return ;
 		}else {
-			System.out.println(this.myAgent.getLocalName() + " --> The potential Wumpus still probably blocked ! (NeedHelpBehaviour) "+((fsmAgent)this.myAgent).nextNode);
+			System.out.println(this.myAgent.getLocalName() + " --> The potential Wumpus still probably blocked at "+((fsmAgent)this.myAgent).nextNode+" ! (NeedHelpBehaviour) ");
 		}
         block(5000);
 	}

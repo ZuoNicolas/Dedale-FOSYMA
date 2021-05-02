@@ -120,8 +120,7 @@ public class fsmAgent extends AbstractDedaleAgent {
 		fsm.registerDefaultTransition(A,A);//Back to explo
 		fsm.registerTransition(A,B, 1) ;//poke every PokeTime
 		fsm.registerTransition(A,C, 2) ;//Receive msg to ShareMap
-		fsm.registerTransition(A,F, 3) ;//Check Wumpus
-		fsm.registerTransition(A,E, 4) ;//End Explo, go to chase
+		fsm.registerTransition(A,E, 4) ;//End Explo, go to chase, or go to check if is a wumpus
 		fsm.registerTransition(A,H, 5) ;//Go to help block
 		fsm.registerTransition(A,M, 6) ;//Go to MoveTo, to block a node
 		// B -> SayHello
@@ -134,7 +133,6 @@ public class fsmAgent extends AbstractDedaleAgent {
 		fsm.registerTransition(D,G, 2) ;//Back to SuccessBlock
 		// E -> DumbChase
 		fsm.registerDefaultTransition(E,E) ;//Back to Chase
-		fsm.registerTransition(E,F, 2) ;//Go directly checkWumpusBlocked
 		fsm.registerTransition(E,K, 3) ;//Go to fast check if is Wumpus or not
 		fsm.registerTransition(E,C, 4) ;//Share Map to every agent one time
 		fsm.registerTransition(E,M, 5) ;//go to MoveTo, for help to block a note
